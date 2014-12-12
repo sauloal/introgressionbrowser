@@ -1,0 +1,11 @@
+flask
+ete2
+sqlalchemy
+##if not in the system
+#Pillow
+#Image
+#numpy
+#scipy
+#matplotlib
+#MySQL-python
+

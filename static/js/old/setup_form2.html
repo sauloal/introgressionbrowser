@@ -1,0 +1,710 @@
+<!doctype html>
+
+
+{% macro getTechs(sid, tid, seltech) -%}
+											<div><span class="disclose"><span></span></span>technology
+												<select id="technology_{{sid}}_{{tid}}_val_1" name="technology" >
+													{% for option in ["Illumina", "454", "PacBio", "Sanger"] -%}
+														{% set selected = "" -%}
+														{% if option == seltech -%}
+															{% set selected = 'selected="selected"' -%}
+														{% endif -%}
+														<option value="{{ option }}"{{ selected|safe }}>{{ option }}</option>
+													{% endfor -%}
+												</select>
+												<button name="add" value="add" class="copy">+</button>
+												<button name="del" value="del" class="delete">-</button>
+											</div>
+{% endmacro -%}
+
+{% macro getLibInfo(sid, tid, lid, sellib) -%}
+														<div><span class="disclose"><span></span></span>
+															library Name
+															<input type="text" id="library_{{ sid }}_{{ tid }}_{{ lid }}_val_1" name="name" value="{{ sellib["name"] }}"/>
+															Type
+															<select id="library_{{ sid }}_{{ tid }}_{{ lid }}_val_2" name="type">
+																{% for option in ["PE", "MP", "WGS", "Circular"] -%}
+																	{% set selected = "" -%}
+																	{% if option == sellib["type"] -%}
+																		{% set selected = 'selected="selected"' -%}
+																	{% endif -%}
+																	<option value="{{ option }}"{{ selected|safe }}>{{ option }}</option>
+																{% endfor %}
+															</select>
+															Size
+															<input type="text" id="library_library_{{ sid }}_{{ tid }}_{{ lid }}_val_3" name="size" value="{{ sellib["size"] }}"/>
+															<button name="add" value="add" class="copy">+</button>
+															<button name="del" value="del" class="delete">-</button>
+														</div>
+{% endmacro -%}
+
+
+
+{% macro getPairInfo(sid, tid, lid, pid, selpai) -%}
+										<div><span class="disclose"><span></span></span>
+											pair {{selpai}}
+											<button name="add" value="add" class="copy">+</button>
+											<button name="del" value="del" class="delete">-</button>
+										</div>
+{% endmacro -%}
+											<!--<select id="pair_1_val_1" name="direction">-->
+											<!--	<option value="fwdrev">fwd-rev</option>-->
+											<!--	<option value="revfwd">rev-fwd</option>-->
+											<!--	<option value="fwdfwd">fwd-fwd</option>-->
+											<!--	<option value="revrev">rev-rev</option>-->
+											<!--</select>-->
+
+
+{% macro getFileInfo(sid, tid, lid, pid, fid, selfil) -%}
+												<div>
+													<strong>{{ selfil }}</strong>
+													<input hidden=true name="fn" value="{{ selfil }}">
+												</div>
+{% endmacro -%}
+													<!--Direction-->
+													<!--<select id="file_{{ sid }}_{{ tid }}_{{ lid }}_{{ pid }}_{{ fid }}_val_1" name="direction">-->
+														<!--<option value="fwd" selected=true >fwd</option>-->
+														<!--<option value="rev">rev</option>-->
+													<!--</select>-->
+
+
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+
+	<title>Change Setup</title>
+	<meta name="description" content="Change Project Setup">
+	<meta name="author" content="Saulo Aflitos">
+	<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+<body>
+	<!--<section id="demo">-->
+	<!--	<ol class="sortable" id="main">-->
+	<!--		<li id="species_1" level=0>-->
+	<!--			<div><span class="disclose"><span></span></span>species-->
+	<!--				<input type="text" id="species_1_val_1" name="name" value="F5"/>-->
+	<!--			</div>-->
+	<!--			<ol id="o1">-->
+	<!--				<li id="technology_1" level=1>-->
+	<!--					<div><span class="disclose"><span></span></span>technology-->
+	<!--						<select id="technology_1_val_1" name="technology" >-->
+	<!--							<option value="illumina">Illumina</option>-->
+	<!--							<option value="454">454</option>-->
+	<!--							<option value="PacBio">PacBio</option>-->
+	<!--							<option value="sanger">sanger</option>-->
+	<!--						</select>-->
+	<!--						<button name="add" value="add" class="copy">+</button>-->
+	<!--						<button name="del" value="del" class="delete">-</button>-->
+	<!--					</div>-->
+	<!--					<ol id="o2">-->
+	<!--						<li id="library_1" level=2>-->
+	<!--							<div><span class="disclose"><span></span></span>-->
+	<!--								library Name-->
+	<!--								<input type="text" id="library_1_val_1" name="name" value="PE300"/>-->
+	<!--								Type-->
+	<!--								<select id="library_1_val_2" name="type">-->
+	<!--									<option value="PE">PE</option>-->
+	<!--									<option value="MP">MP</option>-->
+	<!--									<option value="circular">Circular</option>-->
+	<!--								</select>-->
+	<!--								Size-->
+	<!--								<input type="text" id="library_1_val_3" name="size" value="300"/>-->
+	<!--								<button name="add" value="add" class="copy">+</button>-->
+	<!--								<button name="del" value="del" class="delete">-</button>-->
+	<!--							</div>-->
+	<!--							<ol id="o3">-->
+	<!--								<li id="pair_1" level=3>-->
+	<!--									<div><span class="disclose"><span></span></span>-->
+	<!--										pair-->
+	<!--										<select id="pair_1_val_1" name="direction">-->
+	<!--											<option value="fwdrev">fwd-rev</option>-->
+	<!--											<option value="revfwd">rev-fwd</option>-->
+	<!--											<option value="fwdfwd">fwd-fwd</option>-->
+	<!--											<option value="revrev">rev-rev</option>-->
+	<!--										</select>-->
+	<!--										<button name="add" value="add" class="copy">+</button>-->
+	<!--										<button name="del" value="del" class="delete">-</button>-->
+	<!--									</div>-->
+	<!--									<ol id="o4">-->
+	<!--										<li id="file_1" class="no-nest" style="display: list-item;" level=4>-->
+	<!--											<div><span class="disclose"><span></span></span>-->
+	<!--												file1.fastq-->
+	<!--												Direction-->
+	<!--												<input hidden=true name="fn" value="/mnt/data/file1.fastq">-->
+	<!--												<select id="file_1_val_1" name="direction">-->
+	<!--													<option value="fwd" selected=true >fwd</option>-->
+	<!--													<option value="rev">rev</option>-->
+	<!--												</select>-->
+	<!--											</div>-->
+	<!--										</li>-->
+	<!--										<li id="file_2" class="no-nest" style="display: list-item;" level=4>-->
+	<!--											<div><span class="disclose"><span></span></span>-->
+	<!--												file2.fastq-->
+	<!--												Direction-->
+	<!--												<input hidden=true name="fn" value="/mnt/data/file2.fastq">-->
+	<!--												<select id="file_2_val_1" name="direction">-->
+	<!--													<option value="fwd">fwd</option>-->
+	<!--													<option value="rev" selected=true>rev</option>-->
+	<!--												</select>-->
+	<!--											</div>-->
+	<!--										</li>-->
+	<!--									</ol>-->
+	<!--								</li>-->
+	<!--							</ol>-->
+	<!--						</li>-->
+	<!--					</ol>-->
+	<!--				</li>-->
+	<!--			</ol>-->
+	<!--		</li>-->
+	<!--	</ol>-->
+
+		<!--<input type="submit" name="serialize"   id="serialize"   value="Serialize" />-->
+		<!--<input type="submit" name="toArray"	 id="toArray"	 value="To array" />-->
+		<!--<input type="submit" name="toHierarchy" id="toHierarchy" value="To hierarchy" />-->
+		<!--<input type="submit" name="toJson"	  id="toJson"	  value="To JSON" />-->
+
+		<!--<pre id="serializeOutput"></pre>-->
+		<!--<pre id="toArrayOutput"></pre>-->
+		<!--<pre id="toHierarchyOutput"></pre>-->
+	<!--</section>-->
+
+
+
+	<section id="demo3">
+		{% set olCount   = []												 -%}
+		{% set spCount   = []												 -%}
+		{% for projectName in g.structure | sort-%}
+			{% set projCount   = []										   -%}
+			<ol class="sortable" id="main">
+				<li id="project_{{ length(projCount) }}" level=0>
+					<div><span class="disclose"><span></span></span>project
+						<input type="text" id="project_{{ length(projCount) }}" name="name" value="{{ projectName }}"/>
+					</div>
+
+					{% set projectStatus = "CHECKED"								  -%}
+					{% set samples	   = g.structure[projectName][projectStatus]	-%}
+					{% set samplesKeys   = samples.keys()							 -%}
+					{% do samplesKeys.sort()										  -%}
+
+					{% for projectSample in samplesKeys | sort if ( projectSample != none ) -%}
+						<ol id="ol_{{ length(olCount) }}">
+							{% do olCount.append(1) -%}
+							<li id="species_{{ length(spCount) }}" level=1>
+								<div><span class="disclose"><span></span></span>Sample
+									<input type="text" id="species_{{ length(spCount) }}_val_1" name="name" value="{{ projectSample }}"/>
+								</div>
+
+
+								{% set teCount   = []												 -%}
+								{% for sequenceTech in samples[projectSample] | sort if sequenceTech != none -%}
+									<ol id="ol_{{ length(olCount) }}">
+										{% do olCount.append(1) -%}
+										<li id="technology_{{ length(teCount) }}" level=2>
+											{{ getTechs(length(spCount), length(teCount), sequenceTech) }}
+
+
+											{% set liCount   = []												 -%}
+											{% for libraryName in samples[projectSample][sequenceTech] | sort if libraryName != none -%}
+												{% set paCount   = []												 -%}
+												<ol id="ol_{{ length(olCount) }}">
+													{% do olCount.append(1) -%}
+													<li id="library_{{ length(liCount) }}" level=3>
+														{{ getLibInfo(length(spCount), length(teCount), length(liCount), g.projects[projectName]["libs"][sequenceTech][libraryName]) }}
+
+
+														{% set fiCount   = []												 -%}
+														{% for fileName in samples[projectSample][sequenceTech][libraryName] | sort if fileName != none -%}
+															{% set data	 = samples[projectSample][sequenceTech][libraryName][fileName] -%}
+															{% set pairName = data.pairName											   -%}
+
+															{% if pairName not in paCount -%}
+																{% if length(paCount) != 0 -%}
+																	</li>
+																</ol>
+																{% endif %}
+																{% do paCount.append(pairName) -%}
+																<ol id="o{{ length(olCount) }}">
+																	{% do olCount.append(1) -%}
+																	<li id="pair_{{ length(paCount) }}" level=4>
+																		<div><span class="disclose"><span></span></span>
+																			pair
+																			<input id="pair_{{ length(paCount) }}_val_1" name="name" value="{{ pairName }}" size=80/>
+																			<button name="add" value="add" class="copy">+</button>
+																			<button name="del" value="del" class="delete">-</button>
+																		</div>
+															{% endif %}
+
+
+
+																	<ol id="o{{ length(olCount) }}">
+																		{% do olCount.append(1) -%}
+																		<li id="file_{{ length(fiCount) }}" class="no-nest" style="display: list-item;" level=5>
+																			{{ getFileInfo(length(spCount), length(teCount), length(liCount), length(paCount), length(fiCount), fileName) }}
+																		</li>
+																	</ol>
+
+
+															{% do fiCount.append(1) -%}
+														{% endfor -%}
+															</li>
+														</ol>
+
+													</li>
+												</ol>
+												{% do liCount.append(1) -%}
+											{% endfor -%}
+
+
+
+										</li>
+									</ol>
+									{% do teCount.append(1) -%}
+								{% endfor -%}
+
+
+
+							</li>
+						</ol>
+						{% do spCount.append(1) -%}
+					{% endfor			   -%}
+
+
+
+				</li>
+			</ol>
+		{% do projCount.append(1) %}
+		{% endfor -%}
+	</section>
+
+	<input type="submit" name="toJson" id="toJson" value="To JSON" />
+	<pre>
+		<textarea id="toJsonOutput" cols=100 rows=20>
+			json
+		</textarea>
+	</pre>
+
+
+
+
+
+	<style type="text/css">
+		html {
+			background-color: #eee;
+		}
+
+		body {
+			-webkit-border-radius: 10px;
+			   -moz-border-radius: 10px;
+					border-radius: 10px;
+			color: #444;
+			background-color: #fff;
+			font-size: 13px;
+			font-family: Freesans, sans-serif;
+			padding: 1em 1em;
+			width: 1024px;
+			margin: 5px auto;
+			box-shadow:				1px 1px 8px #444;
+			-mox-box-shadow:		1px 1px 8px #444;
+			-webkit-box-shadow:		1px -1px 8px #444;
+		}
+
+		a, a:visited {
+			color: #4183C4;
+			text-decoration: none;
+		}
+
+		a:hover {
+			text-decoration: underline;
+		}
+
+		pre, code {
+			font-size: 12px;
+		}
+
+		pre {
+			width: 100%;
+			overflow: auto;
+		}
+
+		small {
+			font-size: 90%;
+		}
+
+		small code {
+			font-size: 11px;
+		}
+
+		.placeholder {
+			outline: 1px dashed #4183C4;
+			/*-webkit-border-radius: 3px;
+			-moz-border-radius: 3px;
+			border-radius: 3px;
+			margin: -1px;*/
+		}
+
+		.mjs-nestedSortable-error {
+			background: #fbe3e4;
+			border-color: transparent;
+		}
+
+		ol {
+			margin: 0;
+			padding: 0;
+			padding-left: 30px;
+		}
+
+		ol.sortable, ol.sortable ol {
+			margin: 0 0 0 25px;
+			padding: 0;
+			list-style-type: none;
+		}
+
+		ol.sortable {
+			margin: 4em 0;
+		}
+
+		.sortable li {
+			margin: 5px 0 0 0;
+			padding: 0;
+		}
+
+		.sortable li div  {
+			border: 1px solid #d4d4d4;
+			-webkit-border-radius: 3px;
+			-moz-border-radius: 3px;
+			border-radius: 3px;
+			border-color: #D4D4D4 #D4D4D4 #BCBCBC;
+			padding: 6px;
+			margin: 0;
+			cursor: move;
+			background: #f6f6f6;
+			background: -moz-linear-gradient(top,  #ffffff 0%, #f6f6f6 47%, #ededed 100%);
+			background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ffffff), color-stop(47%,#f6f6f6), color-stop(100%,#ededed));
+			background: -webkit-linear-gradient(top,  #ffffff 0%,#f6f6f6 47%,#ededed 100%);
+			background: -o-linear-gradient(top,  #ffffff 0%,#f6f6f6 47%,#ededed 100%);
+			background: -ms-linear-gradient(top,  #ffffff 0%,#f6f6f6 47%,#ededed 100%);
+			background: linear-gradient(to bottom,  #ffffff 0%,#f6f6f6 47%,#ededed 100%);
+			filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#ededed',GradientType=0 );
+		}
+
+		.sortable li.mjs-nestedSortable-branch div {
+			background: -moz-linear-gradient(top,  #ffffff 0%, #f6f6f6 47%, #f0ece9 100%);
+			background: -webkit-linear-gradient(top,  #ffffff 0%,#f6f6f6 47%,#f0ece9 100%);
+
+		}
+
+		.sortable li.mjs-nestedSortable-leaf div {
+			background: -moz-linear-gradient(top,  #ffffff 0%, #f6f6f6 47%, #bcccbc 100%);
+			background: -webkit-linear-gradient(top,  #ffffff 0%,#f6f6f6 47%,#bcccbc 100%);
+
+		}
+
+		li.mjs-nestedSortable-collapsed.mjs-nestedSortable-hovering div {
+			border-color: #999;
+			background: #fafafa;
+		}
+
+		.disclose {
+			cursor: pointer;
+			width: 10px;
+			display: none;
+		}
+
+		.sortable li.mjs-nestedSortable-collapsed > ol {
+			display: none;
+		}
+
+		.sortable li.mjs-nestedSortable-branch > div > .disclose {
+			display: inline-block;
+		}
+
+		.sortable li.mjs-nestedSortable-collapsed > div > .disclose > span:before {
+			content: '+ ';
+		}
+
+		.sortable li.mjs-nestedSortable-expanded > div > .disclose > span:before {
+			content: '- ';
+		}
+
+		h1 {
+			font-size: 2em;
+			margin-bottom: 0;
+		}
+
+		h2 {
+			font-size: 1.2em;
+			font-weight: normal;
+			font-style: italic;
+			margin-top: .2em;
+			margin-bottom: 1.5em;
+		}
+
+		h3 {
+			font-size: 1em;
+			margin: 1em 0 .3em;;
+		}
+
+		p, ol, ul, pre, form {
+			margin-top: 0;
+			margin-bottom: 1em;
+		}
+
+		dl {
+			margin: 0;
+		}
+
+		dd {
+			margin: 0;
+			padding: 0 0 0 1.5em;
+		}
+
+		code {
+			background: #e5e5e5;
+		}
+
+		input {
+			vertical-align: text-bottom;
+		}
+
+		.notice {
+			color: #c33;
+		}
+	</style>
+
+
+
+
+	<script type="application/javascript" src="{{ url_for('static', filename='js/jquery1.9.1/jquery-ui-1.10.1.custom/js/jquery-1.9.1.js'			   ) }}"></script>
+	<script type="application/javascript" src="{{ url_for('static', filename='js/jquery1.9.1/jquery-ui-1.10.1.custom/js/jquery-ui-1.10.1.custom.min.js') }}"></script>
+	<script type="application/javascript" src="{{ url_for('static', filename='js/jquery1.9.1/jquery.ui.touch-punch.min.js'							 ) }}"></script>
+	<script type="application/javascript" src="{{ url_for('static', filename='js/jquery1.9.1/jquery.mjs.nestedSortable.js'							 ) }}"></script>
+	<script type="application/javascript" src="{{ url_for('static', filename='js/json2.js'															 ) }}"></script>
+
+
+	<script>
+		$(document).ready(function(){
+			$('ol.sortable').nestedSortable({
+				forcePlaceholderSize: true,
+				handle: 'div',
+				helper:	'clone',
+				items: 'li',
+				opacity: .6,
+				placeholder: 'placeholder',
+				revert: 250,
+				tabSize: 25,
+				tolerance: 'pointer',
+				toleranceElement: '> div',
+				maxLevels: 6,
+
+				//disableNesting: 'no-nest',
+				allowChangeLevel: false,
+				isTree: true,
+				expandOnHover:700,
+				startCollapsed: false
+			});
+
+			$('.disclose').on('click', function() {
+				$(this).closest('li').toggleClass('mjs-nestedSortable-collapsed').toggleClass('mjs-nestedSortable-expanded');
+			})
+
+			//$('#serialize').click(function(){
+			//	serialized = $('ol.sortable').nestedSortable('serialize');
+			//	$('#serializeOutput').text(serialized+'\n\n');
+			//})
+			//
+			//$('#toHierarchy').click(function(e){
+			//	hiered = $('ol.sortable').nestedSortable('toHierarchy', {startDepthCount: 0});
+			//	hiered = dump(hiered);
+			//	(typeof($('#toHierarchyOutput')[0].textContent) != 'undefined') ?
+			//	$('#toHierarchyOutput')[0].textContent = hiered : $('#toHierarchyOutput')[0].innerText = hiered;
+			//})
+			//
+			//$('#toArray').click(function(e){
+			//	arraied = $('ol.sortable').nestedSortable('toArray', {startDepthCount: 0});
+			//	arraied = dump(arraied);
+			//	(typeof($('#toArrayOutput')[0].textContent) != 'undefined') ?
+			//	$('#toArrayOutput')[0].textContent = arraied : $('#toArrayOutput')[0].innerText = arraied;
+			//})
+
+			$('#toJson').click(function(e){
+				//hiered = $('ol.sortable').nestedSortable('toHierarchy', {startDepthCount: 0});
+				//console.log("to json");
+				$('ol.sortable').each(function(){
+					//console.log(this);
+					hiered   = toHierarchy( this )
+					//console.log(hiered);
+					var text = JSON.stringify(hiered);
+					//console.log(text);
+                    var $jout = $('#toJsonOutput');
+                    $jout.val($jout.val() + text);
+					//(typeof($('#toJsonOutput')[0].textContent) != 'undefined') ?
+					//$('#toJsonOutput')[0].textContent += text : $('#toJsonOutput')[0].innerText += text;
+				});
+			});
+
+
+
+
+			$('ol.sortable').nestedSortable({
+				update: function(event) {
+					global = this;
+					//$(this)._trigger("revert", event, this._uiHash());
+
+					var main = $('ol.sortable').first();
+					console.log(main.attr('id'));
+
+					$(main).find('li').each(function(){
+						var li	 = this;
+						var parent = $(li).parent('ol');
+						var cLevel = $(li).attr('level');
+						var lid	= $(li).attr('id');
+						console.log("ROOT MAIN "+main.attr('id')+" LI "+$(li).attr('id')+" PARENT OL "+$(parent).attr('id'));
+						var level  = 0;
+
+						if (parent) {
+							if ( $(parent)[0] != $(main)[0] ) {
+								while ( $(parent)[0] != $(main)[0] ) {
+									console.log("LOOP PARENT "+$(parent).attr('id')+" MAIN "+$(main).attr('id')+" level "+level)
+									level  = level + 1;
+									parent = $(parent).parents('ol')[0];
+
+									if ( level > 6 ) {
+										break;
+									}
+								}
+							} else {
+								level = 0;
+							}
+						} else {
+							level = -1;
+						}
+
+						if ( cLevel && cLevel != level ){
+							console.log("!CORRECT LEVEL "+cLevel+" LEVEL "+level+" ID "+lid);
+							$(global).sortable('cancel');
+							return false;
+						} else {
+							console.log("CORRECT LEVEL "+cLevel+" LEVEL "+level+" ID "+lid);
+						}
+						console.log("LI "+$(li).attr('id')+" level "+level)
+						//console.log("Id " + $(this).attr("id") + " Level " + curr);
+					});
+				}
+			});
+
+
+			$('button.copy').click(function(e){
+					parentOl = $(this).parents('ol')[0];
+					parentIl = $(this).parents('li')[0];
+					//alert("CLICK OL"+$(parentOl).attr('id')+" LI "+$(parentIl).attr('id'));
+					clone	= $(parentIl).clone(true, true);
+					$(clone).children('li,ol').each(function(){
+						$(this).remove();
+					});
+
+					var ids = ($(clone).attr(clone.attribute || 'id') || '').match(clone.expression || (/(.+)[-=_](.+)/));
+					liName = ids[1];
+					liId   = parseInt(ids[2]);
+					maxId  = liId;
+
+					$('ol.sortable').find('li').each(function(){
+						var cids = ($(this).attr(this.attribute || 'id') || '').match(this.expression || (/(.+)[-=_](.+)/));
+						cname = cids[1];
+						cid   = parseInt(cids[2]);
+						//alert("CID NAME "+cname+" ID "+cid);
+						if ( cname == liName && cid > maxId ) {
+							maxId = cid;
+						};
+					});
+
+					$(clone).attr('id', liName+"_"+(maxId+1));
+
+					$(clone).appendTo($(parentOl));
+			});
+
+			$('button.delete').click(function(e){
+					parentIl = $(this).parents('li')[0];
+					children = $(parentIl).find('ol');
+					cLen	 = $(children).length;
+
+					//alert("PARENT IL "+$(parentIl).attr('id')+" LENGTH "+cLen)
+					if ( cLen == 0 ) {
+						$(parentIl).remove();
+					}
+
+			});
+
+		});
+
+		function toHierarchy(o) {
+			o = o || {};
+			var sDepth = o.startDepthCount || 0,
+				ret = [];
+
+			$(o).children('li').each(function () {
+				//alert("LI "+$(this).attr('id'));
+				var level = recursiveItems( $(this) );
+				ret.push(level);
+			});
+
+			return ret;
+		}
+
+
+		function recursiveItems(li) {
+			var id = ($(li).attr(li.attribute || 'id') || '').match(li.expression || (/(.+)[-=_](.+)/));
+
+			if (id) {
+				var item = { "_id" : id[2], "_name": id[1] };
+				var data = $(li).children('div').children('select,input');
+				//alert(data.html());
+				if ( data.length > 0 ) {
+					data.each(function() {
+						var tName = $(this).attr('name');
+						var tVal  = $(this).val();
+						item[tName] = tVal;
+					});
+				}
+
+				if ( $(li).children('ol').children('li').length > 0 ) {
+					item._children = [];
+
+					$(li).children('ol').children('li').each(function() {
+						var level = recursiveItems($(this));
+						item._children.push(level);
+					});
+				}
+				return item;
+			}
+		}
+
+
+
+
+		function dump(arr,level) {
+			var dumped_text = "";
+			if(!level) level = 0;
+
+			//The padding given at the beginning of the line.
+			var level_padding = "";
+			for(var j=0;j<level+1;j++) level_padding += "	";
+
+			if(typeof(arr) == 'object') { //Array/Hashes/Objects
+				for(var item in arr) {
+					var value = arr[item];
+
+					if(typeof(value) == 'object') { //If it is an array,
+						dumped_text += level_padding + "'" + item + "' ...\n";
+						dumped_text += dump(value,level+1);
+					} else {
+						dumped_text += level_padding + "'" + item + "' => \"" + value + "\"\n";
+					}
+				}
+			} else { //Strings/Chars/Numbers etc.
+				dumped_text = "===>"+arr+"<===("+typeof(arr)+")";
+			}
+			return dumped_text;
+		}
+
+	</script>

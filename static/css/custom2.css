@@ -1,0 +1,403 @@
+html {
+    background-color: #eee;
+}
+
+body {
+    -webkit-border-radius: 10px;
+       -moz-border-radius: 10px;
+            border-radius: 10px;
+    color: #444;
+    background-color: #fff;
+    font-size: 13px;
+    font-family: FontAwesome, proxima-nova, "Helvetica neue", Helvetica, Arial, Freesans, sans-serif;
+    padding: 1em 1em;
+    width: 1200px;
+    margin: 5px auto;
+    /*height: 100%;*/
+    box-shadow:				1px 1px 8px #444;
+    -mox-box-shadow:		1px 1px 8px #444;
+    -webkit-box-shadow:		1px -1px 8px #444;
+}
+
+#wrap {
+    min-height: 100%;
+    min-height: 250px;
+    height: auto !important;
+    /*height: 100%;*/
+    /*margin: 0 auto -35px;*/
+    display: block;
+}
+
+#push,
+#footer {
+    height: 35px;
+}
+
+#footer {
+    background-color: #f5f5f5;
+}
+
+.lab_chk {
+    display: inline-block;
+}
+
+.srcicon {
+    width: 35px;
+    height: 35px;
+}
+
+.ui-spinner {
+    border: 0px;
+    margin-right: 0px;
+    margin-bottom: 0px;
+    /*border-radius: 0px;*/
+}
+
+
+
+
+/*HEATMAP*/
+td.datacell {
+}
+
+tr.coloredRow {
+    border-style: solid none solid none !important;
+    border-top-color: #000000;
+    border-top-width: 1px;
+    border-bottom-color: #000000;
+    border-bottom-width: 1px;
+}
+
+td.coloredCol {
+    border-style: none solid none solid !important;
+    border-left-width : 1px;
+    border-left-color : #000000;
+    border-right-width: 1px;
+    border-right-color: #000000;
+}
+
+td.datablock {
+    text-align: center;
+    vertical-align: middle;
+    /*font-size: 5px;*/
+    height: 3px;
+    width: 1px;
+}
+
+td.datatd{
+    /*border-color: #ffffff;*/
+}
+
+td.tdinvisible{
+    visibility: hidden;
+    display: none;
+}
+
+th.thinvisible{
+    visibility: hidden;
+    display: none;
+}
+
+th.dataHeader{
+    white-space: nowrap;
+    white-space-collapse: nowrap;
+    /*line-height: 8px;*/
+}
+
+td.dataRowHeader{
+    white-space: nowrap;
+    text-align: right;
+    /*white-space-collapse: nowrap;*/
+    /*line-height: 8px;*/
+}
+
+table#data {
+    width   : 100%;
+    font-size: smaller;
+    line-height: normal;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+
+
+
+/*DNA*/
+table.alignmentTable{
+    border-collapse: collapse;
+    /*display: compact;*/
+    border: 0px;
+    margin: 0px;
+    height: 2px;
+    padding: 0px;
+}
+
+tr.alignmentLine {
+    line-height: 5px;
+}
+
+td.alignmentHead,
+td.alignmentCell {
+    text-align: left;
+    border: 0px;
+    margin: 0px;
+    padding: 0px;
+}
+
+td.alignmentHead{
+    font-weight: 400;
+}
+
+td.alignmentVal {
+    font-weight: 400;
+    font-size: smaller;
+}
+
+div.dnaNuc {
+    border: 0px;
+    margin: 0px;
+    padding: 0px;
+    display: inline-block;
+    white-space-collapse: discard;
+    white-space: nowrap;
+}
+
+div.dnaA {
+    background-color: #ffff66;
+}
+
+div.dnaC {
+    background-color: #ff6666;
+}
+
+div.dnaG {
+    background-color: #66ff66;
+}
+
+div.dnaT {
+    background-color: #6666ff;
+}
+
+.monospace{
+    font-family: Menlo,Monaco,Consolas,'Courier New',monospace;
+}
+
+
+
+/*MATRIX*/
+#alignmentDst {
+    display: block;
+}
+
+table.matrixTable{
+    border-collapse: collapse;
+    /*display: compact;*/
+    border: 0px;
+    margin: 0px;
+    height: 2px;
+    padding: 0px;
+}
+
+tr.matrixLine{
+    line-height: 5px;
+}
+
+td.matrixHeader{
+    font-weight: 400;
+}
+
+td.matrixCell{
+}
+
+td.matrixVal {
+    font-size: smaller;
+}
+
+td.matrixDiagonal {
+    background-color: #f0f0f0;
+}
+
+td.matrixParallel {
+    background-color: #808080;
+}
+
+td.matrixMain{
+    background-color: #ffffff;
+}
+
+
+
+/*REPORT*/
+table.reportTable{
+
+}
+
+tr.reportLine{
+
+}
+
+td.reportHeader{
+    font-weight: 600;
+}
+
+td.reportCell{
+}
+
+td.reportVal{
+    font-size: smaller;
+}
+
+
+
+/*TOLLTIP*/
+.ptip{
+    line-height: 30%;
+}
+
+
+
+/*COMBOBOX*/
+.custom-combobox {
+    position: relative;
+    display: inline-block;
+}
+
+.custom-combobox-toggle {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    margin-left: -1px;
+    padding: 0;
+    /* support: IE7 */
+    *height: 1.7em;
+    *top: 0.1em;
+}
+
+.custom-combobox-input {
+    margin: 0;
+    padding: 0.3em;
+}
+
+.ui-autocomplete {
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+input.custom-combobox-input{
+    width: 225px;
+}
+
+
+
+/*OTHER*/
+.iconControl{
+    margin: 3px;
+}
+
+.rotate {
+    -webkit-transform: rotate(-45deg);
+    -moz-transform: rotate(-45deg);
+    -ms-transform: rotate(-45deg);
+    -o-transform: rotate(-45deg);
+    transform: rotate(-45deg);
+
+    /* also accepts left, right, top, bottom coordinates; not required, but a good idea for styling */
+    -webkit-transform-origin: 50% 50%;
+    -moz-transform-origin: 50% 50%;
+    -ms-transform-origin: 50% 50%;
+    -o-transform-origin: 50% 50%;
+    transform-origin: 50% 50%;
+
+    /* Should be unset in IE9+ I think. */
+    filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);
+}
+
+#sliderLbl{
+    display: inline-block;
+}
+
+hr {
+    /*line-height: 3px;*/
+    margin: 15px;
+}
+
+input.chk {
+    margin: 0px;
+}
+
+label.lab_chk{
+    margin-left: 5px;
+}
+
+.pull-center{
+    text-align: center;
+    /*margin-left: auto;*/
+    /*margin-right: auto;*/
+    /*width: 70%;*/
+    /*background-color: #abcdef;*/
+}
+
+.lblstatus {
+    width: 100%;
+}
+
+.footer {
+    display: block;
+}
+
+#status_row {
+    position: fixed;
+    top: 0;
+    right: 0;
+}
+
+.progress-g {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 75%;
+}
+
+.badge:hover {
+  background-color: #000000;
+}
+
+.badge-error {
+  background-color: #b94a48;
+}
+.badge-error:hover {
+  background-color: #953b39;
+}
+
+/* BLUE */
+.badge-info {
+  background-color: #0000FF;
+}
+.badge-info:hover {
+  background-color: #0404b4;
+}
+
+/* YELLOW */
+.badge-warning {
+  background-color: #F7FE2E;
+}
+.badge-warning:hover {
+  background-color: #D7DF01;
+}
+
+/* GREEN */
+.badge-success {
+  background-color: #00FF00;
+}
+.badge-success:hover {
+  background-color: #3ADF00;
+}
+
+/* RED */
+.badge-important {
+  background-color: #FF0000;
+}
+.badge-important:hover {
+  background-color: #DF0101;
+}

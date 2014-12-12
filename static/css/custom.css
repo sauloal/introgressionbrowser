@@ -1,0 +1,369 @@
+html {
+    background-color: #fff;
+}
+
+body {
+    background-color: #fff;
+    font-size: 13px;
+    font-family: FontAwesome, proxima-nova, "Helvetica neue", Helvetica, Arial, Freesans, sans-serif;
+    margin-top: 2em;
+    width: 100%;
+    /*overflow: scroll;*/
+    /*overflow-x: scroll;*/
+    /*overflow-y: scroll;*/
+
+    /*-webkit-border-radius: 10px;*/
+    /*   -moz-border-radius: 10px;*/
+    /*        border-radius: 10px;*/
+    /*color: #444;*/
+    /*background-color: #fff;*/
+    /*padding: 1em 1em;*/
+    /*width: 95%;*/
+    /*height: 99%;*/
+    /*margin: 5% auto;*/
+    /*box-shadow:				1px 1px 8px #444;*/
+    /*-mox-box-shadow:		1px 1px 8px #444;*/
+    /*-webkit-box-shadow:		1px -1px 8px #444;*/
+    /*visibility: hidden;*/
+}
+
+#wrap {
+    position: absolute;
+    top: 4em;
+    left: 0px;
+    width: 100%;
+    z-index: 90;
+}
+
+#wrap_svg {
+    overflow: scroll;
+    overflow-x: scroll;
+    overflow-y: scroll;
+}
+
+#status {
+    position: fixed;
+    top: 0px;
+    left: 10%;
+    width: 100%;
+    height: 2em;
+    background: #093;
+    color: white;
+    z-index: 100;
+}
+
+.status_div{
+    float: left;
+}
+
+#wrap_buttons {
+    position: fixed;
+    top: 2em;
+    left: 10%;
+    width: 100%;
+    height: 2em;
+    display: block;
+    color: white;
+    background: #093;
+    z-index: 100;
+}
+
+#main_col {
+    top: 0px;
+    left: 0px;
+    position: fixed;
+    width: 10%;
+    height: 4em;
+    overflow: hidden !important;
+    float: right;
+    text-align: left;
+	white-space: nowrap;
+    background: #080;
+    color: white;
+    z-index: 100;
+}
+
+#main_col:hover {
+    width: 40em;
+    height: 100%;
+    display: block;
+    z-index: 1000;
+}
+
+.main_col_setup {
+    height: 4em;
+}
+
+.main_col_div {
+    width: 40em;
+}
+
+#footer {
+    color: black;
+    background: #f2f2f2;
+}
+
+#imgcanvas{
+    position: absolute;
+    top: 4em;
+}
+
+img {
+    width: 33px;
+    height: 33px;
+}
+
+.imgworking {
+    position: fixed;
+    width: 30%;
+    height: 30%;
+    top: 35%;
+    left: 35%;
+    }
+
+#working {
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    background: #ffffff;
+    filter: alpha(opacity=70);
+    opacity: .7;
+    z-index: 50001;
+}
+
+#tooltip {
+    width: 45%;
+    height: 4em;
+    top: 4em;
+    right: 0px;
+    position: fixed;
+    background: rgb(255,255,255);
+    background: rgba(255,255,255,0.6);
+    /*filter: alpha(opacity=70);*/
+    /*opacity: .7;*/
+    z-index: 99;
+}
+
+.introSel {
+    position: fixed;
+    top: 0px;
+    right: 0px;
+    width: 30em;
+    height: 1.5em;
+    overflow: hidden;
+}
+
+.introSel:hover {
+    width: 30em;
+    height: 100%;
+    overflow: scroll;
+}
+
+
+/*DNA*/
+table.alignmentTable{
+    border-collapse: collapse;
+    /*display: compact;*/
+    border: 0px;
+    margin: 0px;
+    height: 2px;
+    padding: 0px;
+}
+
+tr.alignmentLine {
+    line-height: 1em;
+}
+
+td.alignmentHead,
+td.alignmentCell {
+    text-align: left;
+    border: 0px;
+    margin: 0px;
+    padding: 0px;
+}
+
+td.alignmentHead{
+    font-weight: 400;
+}
+
+td.alignmentVal {
+    font-weight: 400;
+    font-size: smaller;
+}
+
+th.alignmentCoord {
+    /*width: 14px;*/
+}
+
+div.alignmentCoord {
+    transform: rotate(270deg);
+    transform-origin: left top 0;
+}
+
+div.dnaNuc {
+    border: 0px;
+    margin: 0px;
+    padding: 0px;
+    display: inline-block;
+    white-space-collapse: discard;
+    white-space: nowrap;
+}
+
+div.dnaA {
+    background-color: #ffff66;
+    color: #ffff66;
+}
+
+div.dnaC {
+    background-color: #ff6666;
+    color: #ff6666;
+}
+
+div.dnaG {
+    background-color: #66ff66;
+    color: #66ff66;
+}
+
+div.dnaT {
+    background-color: #6666ff;
+    color: #6666ff;
+}
+
+.monospace{
+    font-family: Menlo,Monaco,Consolas,'Courier New',monospace;
+}
+
+
+
+/*MATRIX*/
+#alignmentDst {
+    display: block;
+}
+
+table.matrixTable{
+    border-collapse: collapse;
+    /*display: compact;*/
+    border: 0px;
+    margin: 0px;
+    height: 2px;
+    padding: 0px;
+}
+
+tr.matrixLine{
+    line-height: 1em;
+}
+
+td.matrixHeader{
+    font-weight: 400;
+}
+
+td.matrixCell{
+    padding: 0.3em;
+}
+
+td.matrixVal {
+    font-size: smaller;
+}
+
+td.matrixDiagonal {
+    background-color: #ffffff;
+    color: #ffffff;
+}
+
+td.matrixParallel {
+    background-color: #808080;
+}
+
+td.matrixMain{
+    background-color: #ffffff;
+}
+
+
+
+/*REPORT*/
+table.reportTable{
+
+}
+
+tr.reportLine{
+
+}
+
+td.reportHeader{
+    font-weight: 600;
+}
+
+td.reportCell{
+}
+
+td.reportVal{
+    font-size: smaller;
+}
+
+
+
+a.downloadlink {
+    font-size: large;
+    font-weight: 800;
+}
+
+
+button.btnicon {
+    font-size: medium;
+    font-weight: 400;
+    /*color: white;*/
+    border-style: none;
+    background-color: inherit;
+}
+
+button.bevel {
+    border-style: none;
+    background-color: black;
+    color: white;
+}
+
+button.unbevel {
+    border-style: none;
+    background-color: inherit;
+    color: white;
+}
+
+li.bevel {
+    border-style: none;
+    background-color: #cccccc;
+    color: white;
+}
+
+li.unbevel {
+    border-style: none;
+    background-color: inherit;
+    color: white;
+}
+
+.flipped {
+    -moz-transform: rotate(-180deg);
+    -webkit-transform: rotate(-180deg);
+    transform: rotate(-180deg);
+    filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=2)
+}
+
+.clockwise {
+    -moz-transform: rotate(90deg);
+    -webkit-transform: rotate(90deg);
+    transform: rotate(90deg);
+    filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=1)
+}
+
+.counterclockwise {
+    -moz-transform: rotate(270deg);
+    -webkit-transform: rotate(270deg);
+    transform: rotate(270deg);
+    filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3)
+}
+
+div.status_div {
+    /*font-size: medium;*/
+    font-weight: 400;
+}

@@ -1,0 +1,22 @@
+#<VirtualHost *>
+
+WSGIDaemonProcess   ibrowser user=www-data group=www-data threads=5
+WSGIScriptAlias    /ibrowser /var/www/ibrowser/ibrowser.wsgi
+WSGIRestrictStdout Off
+
+<Directory /var/www/ibrowser>
+  WSGIProcessGroup     ibrowser
+  WSGIApplicationGroup %{GLOBAL}
+  Order deny,allow
+  Allow from all
+</Directory>
+
+Alias /static /var/www/ibrowser/static
+<Directory /var/www/ibrowser/static/>
+  Order allow,deny
+  Allow from all
+</Directory>
+
+#</VirtualHost>
+
+LogLevel debug

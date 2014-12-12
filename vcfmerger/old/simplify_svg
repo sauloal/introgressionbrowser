@@ -1,0 +1,1 @@
+ python scour.py --create-groups --enable-id-stripping --enable-comment-stripping --shorten-ids --remove-metadata

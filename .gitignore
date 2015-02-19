@@ -23,3 +23,5 @@ lin/
 nohup.out
 *.tar.gz
 checkout
+excluder
+rsync

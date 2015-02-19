@@ -24,6 +24,7 @@ import os
 import sys
 import io
 import base64
+import random
 from operator import itemgetter
 
 currpath = os.path.dirname( os.path.abspath( __file__ ) )
@@ -120,7 +121,8 @@ else:
 
 
 librepaths = [ # pages which can be seen without login
-#    '/api'
+    '/api',
+    '/favicon.ico'
 ]
 librepoints = [
     'login',
@@ -137,6 +139,29 @@ app.jinja_env.add_extension('jinja2.ext.do')
 app.config['MAX_CONTENT_LENGTH']            = MAX_CONTENT_LENGTH
 #jsonpickle.set_preferred_backend('simplejson')
 #jsonpickle.set_encoder_options('simplejson', ensure_ascii=True, sort_keys=True, indent=1)
+
+
+
+#http://stackoverflow.com/questions/20646822/how-to-serve-static-files-in-flask
+def root_dir():  # pragma: no cover
+    return os.path.abspath(os.path.dirname(__file__))
+
+def get_file(filename):  # pragma: no cover
+    try:
+        src = os.path.join(root_dir(), filename)
+        # Figure out how flask returns static files
+        # Tried:
+        # - render_template
+        # - send_file
+        # This should not be so non-obvious
+        return open(src).read()
+    except IOError as exc:
+        return str(exc)
+
+#    complete_path = os.path.join(root_dir(), "static", "login.html")
+#    mimetype      = "text/html"
+#    content       = get_file(complete_path)
+#    return Response(content, mimetype=mimetype)
 
 
 
@@ -159,7 +184,7 @@ def before_request():
             for librepath in librepaths:
                 if request.path.startswith( librepath ):
                     #print "before request: has config - no username set - redirecting to login", url_for('login')
-                    print "before request: has config - no username set - libre path",request.path, librepath
+                    print "before request: has config - no username set - libre path: request",request.path, "libre", librepath
                     is_libre = True
                     break
                     #abort(401)
@@ -169,7 +194,7 @@ def before_request():
                 for librepoint in librepoints:
                     if request.endpoint == librepoint:
                         #print "before request: has config - no username set - redirecting to login", url_for('login')
-                        print "before request: has config - no username set - libre endpoint",request.endpoint, librepoint
+                        print "before request: has config - no username set - libre endpoint: request",request.endpoint, "libre", librepoint
                         is_libre = True
                         break
 
@@ -201,21 +226,35 @@ def login():
             #print "login: has config - POST"
             username = request.form.get('username', None)
             password = request.form.get('password', None)
-            #print "login: has config - POST - username %s password %s" % ( username, password )
+            noonce   = request.form.get('noonce'  , None)
+            print "login: has config - POST - username %s password %s noonce %s" % ( username, password, noonce )
 
-            if username is not None and password is not None:
-                #print "login: has config - POST - not none"
-                if username in credentials:
-                    #print "login: has config - POST - not none - user in credentials"
-                    pwd = hashlib.sha256(username+password).hexdigest()
-                    #print "login: has config - POST - not none - user in credentials - username %s password %s hex %s" % ( username, password, pwd )
-                    if pwd == credentials[username]:
-                        #print "login: has config - POST - not none - user in credentials - right password"
-                        session['username'] = username
+            if username is not None and password is not None and noonce is not None:
+                if "nonce" in session and noonce == session["nonce"]:
+                    print "login: has config - POST - not none. noonce match"
+                    if username in credentials:
+                        #print "login: has config - POST - not none - user in credentials"
+                        #pwd = hashlib.sha256(username+password).hexdigest()
+                        pwd = credentials[username]
+                        print "pwd %s" % pwd
+                        cry = hashlib.sha256(noonce+pwd).hexdigest()
+                        print "cry %s password %s" % ( cry,  password )
+                        #print "login: has config - POST - not none - user in credentials - username %s password %s hex %s" % ( username, password, pwd )
 
-            return redirect(url_for('get_main', _external=True))
+                        if cry == password:
+                            #print "login: has config - POST - not none - user in credentials - right password"
+                            session['username'] = username
+                            del session['nonce']
+                            return redirect(url_for('get_main', _external=True))
 
-    return app.send_static_file('login.html')
+                else:
+                    print "login: has config - POST - not none. noonce does not match", noonce, session["nonce"] if "nonce" in session else None
+                 
+
+    session["nonce"] = hashlib.sha256( str(random.randint(0, sys.maxint)) + str(time.time()) ).hexdigest()
+    print "new nonce", session["nonce"]
+    return render_template('login.html')
+    #return app.send_static_file('login.html')
 
 
 @app.route('/logout', methods=['GET'])
@@ -225,7 +264,7 @@ def logout():
     """
     print "logoff"
 
-    if hasConfig and credentials and hasLogin:
+    if hasConfig and credentials and hasLogin and 'username' in session:
         print "logoff from user %s: has config" % str(session['username'])
         session.pop('username', None)
 
@@ -1361,6 +1400,7 @@ def read_nfo( db_title, db_nfo, path='.' ):
 load_database()
 #app.debug = True #DEBUG
 app.debug = False #DEBUG
+app.debug = DEBUG
 app.before_first_request(init_db)
 
 

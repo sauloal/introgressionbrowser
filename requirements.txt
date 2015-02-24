@@ -1,6 +1,8 @@
 flask
 ete2
 sqlalchemy
+pysha3
+
 ##if not in the system
 #Pillow
 #Image

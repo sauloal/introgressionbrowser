@@ -4,6 +4,8 @@ import random
 import time
 import sys
 import os
+import sha3
+
 from datetime import datetime
 
 #from wtforms              import form, fields, validators
@@ -106,7 +108,8 @@ def del_user(username):
 
 
 def generate_password_hash(seq):
-    return hashlib.sha384( seq ).hexdigest()
+    return sha3.sha3_512(  seq.encode('utf-8') ).hexdigest()
+    #return hashlib.sha512( seq ).hexdigest()
 
 
 

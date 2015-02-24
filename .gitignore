@@ -25,3 +25,5 @@ nohup.out
 *.tar.gz
 checkout
 .sync/
+excluder
+rsync

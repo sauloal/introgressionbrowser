@@ -1,123 +1,216 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Introgression Browser - Login Page</title>
+        <title>Introgression Browser - Admin Page</title>
     </head>
 
     <body bgcolor="#C2C2C2">
         <div align="center" style="position: relative; top: 45%;">
-
             <h1>Introgression Browser</h1>
-            <h2>Credential Required</h2>
-
-            <form action="" id="form" method="post">
-                <table>
-                    <tr>
-                        <th><p>Username:</p></th><td><input type="text"     name="username" id="username"></td>
-                    </tr>
-                    <tr>
-                        <th><p>Password:</p></th>
-                        <td>
-                            <input type="password" name="password" id="password">
-                            <input type="hidden"   name="noonce"   id="noonce" value="{{ noonce }}">
-                        </td>
-                    </tr>
-                    <tr>
-                        <th colspan="2"><p><input type="submit"   name="Login" value="Login"/></p></th>
-                    </tr>
-                    <tr>
-                        <th colspan="2"><p id="message">{{ message }}</p></th>
-                    </tr>
-                </table>
-            </form>
+            <h2>Administration Page</h2>
         </div>
 
+        <div>
+            <table>
+                <tr>
+                    <th align="left">
+                        Username:
+                    </th>
+                    <td align="left">
+                        <input type="text" id="username"></input>
+                    </td>
+                </tr>
 
-        <div align="center">
-            GitHub Repository: <a href="http://sauloal.github.io/introgressionbrowser/" title="GitHub Repository" alt="Github Repositoty" target="_blank">Source Code, Tutorial and Help</a>
+                <tr>
+                    <th align="left">
+                        Password 1:
+                    </th>
+                    <td align="left">
+                        <input type="password" id="password1"></input>
+                    </td>
+                </tr>
 
-            <b>
-                by Saulo Aflitos
+                <tr>
+                    <th align="left">
+                        Password 2:
+                    </th>
+                    <td align="left">
+                        <input type="password" id="password2"></input>
+                    </td>
+                </tr>
 
-                <a href="https://www.linkedin.com/in/sauloaflitos" title="LinkedIn Profile" target="_blank">LinkedIn profile</a> //
+                <tr>
+                    <td colspan="2" align="left">
+                        <button onclick="add_user()">Add</button>
+                        <input type="hidden" value="{{ noonce }}" id="noonce" name="noonce"></input>
+                    <td>
+                </tr>
 
-                <a href="http://www.ab.wur.nl/ab/"                 title="Applied Bioinformatics" target="_blank">Aplied Bioinformatics</a> //
 
-                <a href="http://www.wageningenur.nl/en.htm"        title="Wageningen University" target="_blank">Wageningen University</a>
+                <tr>
+                    <td colspan="2" align="left">
+                        <b id="message">{{ message if message else "" }}</b>
+                    <td>
+                </tr>
 
-                2012-2014
-            </b>
+                {% for user in users %}
+                <tr>
+                    <th align="left">{{ user }}</th>
+                    <td align="left"><a onclick="delete_user('{{user}}')" href="#">delete</a></td>
+                </tr>
+                {% endfor %}
+
+                <tr>
+                    <td colspan="2" align="left">
+                        <b><a href="/logout">logout</a></b>
+                    <td>
+                </tr>
+            </table>
         </div>
     </body>
 
 
     <footer>
         <script type="text/javascript">
-window.onload = function () {
+  function delete_user( username ) {
+    console.log( "deleting user: ", username );
+    var noonce   = document.getElementById('noonce'  ).value;
 
-    function get_json(url, callback) {
-        //http://www.w3schools.com/json/json_http.asp
-        var xmlhttp = new XMLHttpRequest();
-
-        xmlhttp.onreadystatechange = function() {
-            if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-                var myArr = JSON.parse(xmlhttp.responseText);
-                callback(myArr);
-            }
-        }
-        xmlhttp.open("GET", url, true);
-        xmlhttp.send();
+    var r = confirm("Are you sure you want to delete user '"+username+"'");
+    if (r === false) {
+        return;
     }
 
+    var form = document.createElement("form");
+    form.setAttribute("method", "POST"  );
+    form.setAttribute("action", "/admin");
 
-  document.getElementById('form').onsubmit = function() {
-    //var noonce = new Date().getTime() + '' + new Date().getMilliseconds();
-    //var hash = CryptoJS.SHA384("Message");
+    var action_field = document.createElement("input");
+    action_field.setAttribute("type" , "hidden"  );
+    action_field.setAttribute("name" , "action"  );
+    action_field.setAttribute("value", "del"     );
+    form.appendChild(action_field);
 
-    var username = document.getElementById('username').value;
-    //console.log("username   : ", username);
-    //console.log("username   : ", username.value);
+    var user_field = document.createElement("input");
+    user_field.setAttribute("type" , "hidden"  );
+    user_field.setAttribute("name" , "username");
+    user_field.setAttribute("value", username  );
+    form.appendChild(user_field);
 
-    get_json( "/salt/"+username, function(data) {
-        console.log("salt ", data);
+    var noonce_field = document.createElement("input");
+    noonce_field.setAttribute("type" , "hidden" );
+    noonce_field.setAttribute("name" , "noonce" );
+    noonce_field.setAttribute("value", noonce   );
+    form.appendChild(noonce_field);
 
-        var salt     = data.salt;
-
-        if ( ! salt ) {
-            document.getElementById("message").innerHTML = "no such user";
-            return false;
-        }
-
-        var username = document.getElementById('username').value;
-        //console.log("username   : ", username);
-
-        var password = document.getElementById('password').value;
-        //console.log("password   : ", password);
-
-        var noonce   = document.getElementById('noonce').value;
-        console.log("noonce     : ", noonce);
-
+    document.body.appendChild(form);
+    form.submit();
+    //document.removeChild(form);
+  }
 
 
-        var up         = username + password + salt;
-        console.log("up         : ", up);
 
-        var cryptPass  = CryptoJS.SHA384(up).toString(CryptoJS.enc.Hex);
-        console.log("cryptPass  : ", cryptPass);
+  function add_user() {
+    console.log( "adding user" );
+    var username  = document.getElementById('username' ).value;
+    var password  = document.getElementById('password1').value;
+    var password2 = document.getElementById('password2').value;
+    var noonce    = document.getElementById('noonce'   ).value;
 
-        var res        = CryptoJS.SHA384(noonce + cryptPass).toString(CryptoJS.enc.Hex);
+    console.log( "adding user :: login    : ", username  );
+    console.log( "adding user :: password1: ", password  );
+    console.log( "adding user :: password2: ", password2 );
+    console.log( "adding user :: noonce   : ", noonce    );
 
-        console.log("res        : ", res);
+    if ( password != password2 ) {
+        document.getElementById("message").innerHTML = "Passwords do not match";
+        return;
+    }
 
-        document.getElementById('password').value = res;
+    var up         = username + password + noonce;
+    //console.log("up         : ", up);
 
-        document.getElementById('form').submit();
-        return false;
-    });
+    var cryptPass  = CryptoJS.SHA384(up              ).toString(CryptoJS.enc.Hex);
+    var security   = CryptoJS.SHA384(cryptPass+noonce).toString(CryptoJS.enc.Hex);
 
-    return false;
-  };
-};
+    //console.log("cryptPass  : ", cryptPass);
+
+    var form = document.createElement("form");
+    form.setAttribute("method", "POST"  );
+    form.setAttribute("action", "/admin");
+
+    var action_field = document.createElement("input");
+    action_field.setAttribute("type" , "hidden"  );
+    action_field.setAttribute("name" , "action"  );
+    action_field.setAttribute("value", "add"     );
+    form.appendChild(action_field);
+
+    var user_field = document.createElement("input");
+    user_field.setAttribute("type" , "hidden"  );
+    user_field.setAttribute("name" , "username");
+    user_field.setAttribute("value", username  );
+    form.appendChild(user_field);
+
+    var pass_field = document.createElement("input");
+    pass_field.setAttribute("type" , "hidden"  );
+    pass_field.setAttribute("name" , "password");
+    pass_field.setAttribute("value", cryptPass );
+    form.appendChild(pass_field);
+
+    var noonce_field = document.createElement("input");
+    noonce_field.setAttribute("type" , "hidden" );
+    noonce_field.setAttribute("name" , "noonce" );
+    noonce_field.setAttribute("value", noonce   );
+    form.appendChild(noonce_field);
+
+    var sec_field = document.createElement("input");
+    sec_field.setAttribute("type" , "hidden"   );
+    sec_field.setAttribute("name" , "security" );
+    sec_field.setAttribute("value", security   );
+    form.appendChild(sec_field);
+
+    document.body.appendChild(form);
+    form.submit();
+    //document.removeChild(form);
+  }
+
+
+
+//window.onload = function() {
+//    document.getElementById('form').onsubmit = function() {
+//    var noonce = new Date().getTime() + '' + new Date().getMilliseconds();
+//    var hash = CryptoJS.SHA384("Message");
+//
+//    var form     = document.getElementById('form'    );
+//    console.log("form       : ", form);
+//
+//    var username = document.getElementById('username');
+//    console.log("username   : ", username);
+//    console.log("username   : ", username.value);
+//
+//    var password = document.getElementById('password');
+//    console.log("password   : ", password);
+//    console.log("password   : ", password.value);
+//
+//    var noonce   = document.getElementById('noonce');
+//    console.log("noonce     : ", noonce);
+//    console.log("noonce     : ", noonce.value);
+//
+//    var up         = username.value + password.value;
+//    console.log("up         : ", up);
+//
+//    var cryptPass  = CryptoJS.SHA384(up).toString(CryptoJS.enc.Hex);
+//    console.log("cryptPass  : ", cryptPass);
+//
+//    var data       = CryptoJS.SHA384(noonce.value + cryptPass).toString(CryptoJS.enc.Hex);
+//
+//    console.log("data       : ", data);
+//
+//    password.value = data;
+//
+//    return false;
+//  }
+//}
         </script>
 
 

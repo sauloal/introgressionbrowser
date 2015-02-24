@@ -17,15 +17,18 @@ CUSTOM ORDER FILE:
 #CHROMOSOME= (__global__ or empty for all chromosomes)
 row order\tcol order\n
 """
-
+#TODO
+#https://exploreflask.com/users.html
 
 
 import os
 import sys
 import io
 import base64
-import random
+import glob
 from operator import itemgetter
+
+
 
 currpath = os.path.dirname( os.path.abspath( __file__ ) )
 print "CURRPATH ", currpath
@@ -34,20 +37,13 @@ sys.path.insert(0, os.path.join(currpath, "venv/lib/python2.7/site-packages") )
 
 
 
-print "importing hashlib"
-import hashlib
-
-print "importing glob"
-import glob
-
-print "importing time"
-import time
 
 print "importing flask"
 from flask       import Flask, request, session, send_file, escape, g, redirect, url_for, abort, render_template, flash, make_response, jsonify, Markup, Response, send_from_directory, Blueprint, json
 
 print "importing jinja2"
 from jinja2      import TemplateNotFound
+
 
 bin_path = os.path.abspath( __file__ )
 dir_path = os.path.dirname( bin_path )
@@ -70,24 +66,18 @@ USE_SQL                   = True
 INFOLDER                  = None
 DATABASEINV               = {}
 
-#import os
-#os.urandom(24)
-#'\xe1:\xbf\xc2\xaa\x0b\x04\xb8\xac\xc1\xff;Z-W\xfcRE\xadY"K\xa1v'
 
-#import hashlib
-#hashlib.sha256("<LOGIN><PASSWORD>").hexdigest()
+DATABASES                 = []
+DATABASES_DB_NAME         = 0
+DATABASES_DB_F_NAME       = 1
+DATABASES_DB_CONF         = 2
+DATABASES_MTIME           = 3
+DATABASES_INTERFACE       = 4
 
-DATABASES           = []
-DATABASES_DB_NAME   = 0
-DATABASES_DB_F_NAME = 1
-DATABASES_DB_CONF   = 2
-DATABASES_MTIME     = 3
-DATABASES_INTERFACE = 4
-
-config              = os.path.join( dir_path, 'config.py' )
-hasConfig           = False
-hasLogin            = False
-credentials         = None
+config                    = os.path.join( dir_path, 'config.py' )
+hasConfig                 = False
+hasLogin                  = False
+credentials               = None
 
 
 
@@ -127,6 +117,7 @@ librepaths = [ # pages which can be seen without login
 librepoints = [
     'login',
     'logout',
+    'getsalt',
 ]
 
 loaded    = False
@@ -142,26 +133,13 @@ app.config['MAX_CONTENT_LENGTH']            = MAX_CONTENT_LENGTH
 
 
 
-#http://stackoverflow.com/questions/20646822/how-to-serve-static-files-in-flask
-def root_dir():  # pragma: no cover
-    return os.path.abspath(os.path.dirname(__file__))
+print "importing user db"
+user_db              = os.path.join( dir_path, 'user_db.py' )
+execfile(user_db)
 
-def get_file(filename):  # pragma: no cover
-    try:
-        src = os.path.join(root_dir(), filename)
-        # Figure out how flask returns static files
-        # Tried:
-        # - render_template
-        # - send_file
-        # This should not be so non-obvious
-        return open(src).read()
-    except IOError as exc:
-        return str(exc)
 
-#    complete_path = os.path.join(root_dir(), "static", "login.html")
-#    mimetype      = "text/html"
-#    content       = get_file(complete_path)
-#    return Response(content, mimetype=mimetype)
+
+
 
 
 
@@ -174,6 +152,8 @@ def before_request():
     """
     #print "before request", request.url, request.base_url, request.url_root, request.endpoint
     if hasConfig and credentials and hasLogin:
+        #if get_users() > 0:
+
         #print "before request: has config"
         if 'username' in session:
             #print "before request: has config - has username set"
@@ -220,6 +200,7 @@ def login():
     Perform login
     """
     #print "login"
+    message = ""
     if hasConfig and credentials and hasLogin:
         #print "login: has config"
         if request.method == 'POST':
@@ -229,32 +210,113 @@ def login():
             noonce   = request.form.get('noonce'  , None)
             print "login: has config - POST - username %s password %s noonce %s" % ( username, password, noonce )
 
-            if username is not None and password is not None and noonce is not None:
-                if "nonce" in session and noonce == session["nonce"]:
-                    print "login: has config - POST - not none. noonce match"
-                    if username in credentials:
-                        #print "login: has config - POST - not none - user in credentials"
-                        #pwd = hashlib.sha256(username+password).hexdigest()
-                        pwd = credentials[username]
-                        print "pwd %s" % pwd
-                        cry = hashlib.sha256(noonce+pwd).hexdigest()
-                        print "cry %s password %s" % ( cry,  password )
-                        #print "login: has config - POST - not none - user in credentials - username %s password %s hex %s" % ( username, password, pwd )
+            if username is not None and password is not None and noonce is not None and "noonce" in session and noonce == session["noonce"]:
+                print "login: has config - POST - not none. noonce match"
+                #if username in credentials:
+                if check_user_exists(username):
+                    print "login: has config - POST - not none - user in credentials"
+                    #pwd = credentials[username]
+                    print "login: has config - POST - not none - user in credentials - username %s password %s noonce %s" % ( username, password, noonce )
 
-                        if cry == password:
-                            #print "login: has config - POST - not none - user in credentials - right password"
-                            session['username'] = username
-                            del session['nonce']
-                            return redirect(url_for('get_main', _external=True))
+                    if verify_user_credentials(username, password, noonce):
+                        #print "login: has config - POST - not none - user in credentials - right password"
+                        session['username'] = username
+                        del session['noonce']
+                        return redirect(url_for('get_main', _external=True))
+                    else:
+                        print "login: has config - POST - not none. noonce match", noonce, ( session["noonce"] if "noonce" in session else None )
+                        message = "WRONG PASSWORD"
+                else:
+                    message = "NO SUCH USER"
+            else:
+                print "login: has config - POST - not none. noonce does not match", noonce, ( session["noonce"] if "noonce" in session else None )
+                message = "TRY AGAIN"
+
+    session["noonce"] = gen_noonce()
+    print "new noonce", session["noonce"]
+    return render_template('login.html', noonce=session["noonce"], message=message)
+    #return app.send_static_file('login.html')
+
+
+@app.route('/admin', methods=['GET', 'POST'])
+def admin():
+    """
+    Administration page
+    """
+
+    message = None
+    #print "login"
+    if hasConfig and credentials and hasLogin and request.method == 'POST':
+        print "admin: has config - POST"
+        action   = request.form.get('action'  , None)
+        username = request.form.get('username', None)
+        password = request.form.get('password', None)
+        noonce   = request.form.get('noonce'  , None)
+        security = request.form.get('security', None)
+
+        print "admin: has config - POST - action %s username %s password %s noonce %s security %s" % tuple([ str(x) for x in ( action, username, password, noonce, security ) ])
+
+        if username is not None and action is not None and noonce is not None and username != "admin" and "noonce" in session and noonce == session["noonce"]:
+            if action == "add":
+                print "admin: has config - POST. ADDING USER"
+                if password is None:
+                    print "admin: has config - POST - not none. noonce match. NO PASSWORD"
+                    message = "FAILED TO ADD USER %s. NO PASSWORD" % username
 
                 else:
-                    print "login: has config - POST - not none. noonce does not match", noonce, session["nonce"] if "nonce" in session else None
-                 
+                    print "admin: has config - POST - not none. noonce match"
 
-    session["nonce"] = hashlib.sha256( str(random.randint(0, sys.maxint)) + str(time.time()) ).hexdigest()
-    print "new nonce", session["nonce"]
-    return render_template('login.html')
+                    if check_user_exists(username):
+                    #if username in credentials:
+                        print "admin: has config - POST - not none - user in credentials. ALREADY EXISTS"
+                        message = "FAILED TO ADD USER %s. ALREADY EXISTS" % username
+
+                    else:
+                        if security is None or security != generate_password_hash(password+noonce):
+                            print "admin: has config - POST - not none. SECURITY FAILED %s vs %s" % (str(security), generate_password_hash(password+noonce))
+                            message = "FAILED TO ADD USER %s. SECURITY FAILED" % ( username )
+
+                        else:
+                            print "admin: has config - POST - not none - user not in credentials. ADDING user %s pass %s salt %s" % ( username, password, noonce )
+                            #credentials[username] = password
+                            add_user(username, password, noonce)
+                            message = "SUCCESS IN ADDING USER %s" % ( username )
+
+            elif action == "del":
+                print "admin: has config - POST - not none. noonce match. DELETING USER:", username
+
+                if check_user_exists(username):
+                #if username in credentials:
+                    del_user(username)
+                    #del credentials[username]
+                    message = "SUCCESS IN DELETING USER %s" % username
+
+                else:
+                    message = "FAILED TO DELETE USER '%s'. DOES NOT EXISTS" % username
+
+        else:
+            message = "TRY AGAIN"
+
+
+    session["noonce"] = gen_noonce()
+    print "new noonce", session["noonce"]
+    return render_template('admin.html', users=[x for x in sorted(get_users()) if x != "admin"], message=message, noonce=session["noonce"])
     #return app.send_static_file('login.html')
+
+
+@app.route('/salt/<username>', methods=['GET'])
+def getsalt(username):
+    """
+    Get user's salt
+    """
+    print "get user %s salt" % username
+
+    salt = None
+    if hasConfig and credentials and hasLogin:
+        if check_user_exists(username):
+            salt = get_salt(username)
+
+    return jsonify({'salt' : salt})
 
 
 @app.route('/logout', methods=['GET'])
@@ -280,6 +342,9 @@ def get_username():
 @app.route("/", methods=['GET'])
 def get_main():
     #return redirect ( url_for('static', filename='index.html' ) )
+    if session['username'] == 'admin':
+        return redirect(url_for('admin', _external=True))
+
     return app.send_static_file('index.html')
 
 
@@ -865,9 +930,9 @@ def get_cluster(db_name, ref, chrom):
 
             return jsonify(res)
     elif lst:
-	data = cluster['clusters']
-	filterClusters(data, "DEL")
-	return jsonify(data)
+        data = cluster['clusters']
+        filterClusters(data, "DEL")
+        return jsonify(data)
 
 
     else:
@@ -939,11 +1004,13 @@ def get_spps_raw( man ):
     return sppsinv
 
 
+
 def get_chroms_raw( man ):
     """
     Retrieve list of chromosomes from interface
     """
     return sorted( man.getChroms() )
+
 
 
 def get_genes_raw(man, chrom):
@@ -955,12 +1022,14 @@ def get_genes_raw(man, chrom):
     return genes
 
 
+
 def get_tree_raw(man, chrom, gene):
     """
     Retriece phylogenetic tree from interface
     """
     tree  = man.getTree( gene, chrom )
     return tree
+
 
 
 def get_aln_raw(man, chrom, gene):
@@ -972,6 +1041,7 @@ def get_aln_raw(man, chrom, gene):
     return aln
 
 
+
 def get_matrix_raw(man, chrom, gene):
     """
     Retrieve distance matrix for gene from interface
@@ -979,6 +1049,7 @@ def get_matrix_raw(man, chrom, gene):
     matrix = man.getMatrix( gene, chrom )
 
     return matrix
+
 
 
 def get_report_raw(db_name, man, chrom, gene):
@@ -1010,15 +1081,18 @@ def get_report_raw(db_name, man, chrom, gene):
     return dic
 
 
+
 def get_cluster_raw(man, ref, chrom):
     res = man.getCluster(chrom       , ref)
     return res
+
 
 
 def get_cluster_list_raw(man):
     res = man.getClusterList()
     #print "get_cluster_list_raw", res
     return res
+
 
 
 def appendClusters( man, clusters, chrom ):
@@ -1041,6 +1115,7 @@ def appendClusters( man, clusters, chrom ):
     #print "RES CLUSTER", clusters
 
 
+
 def appendClusterList( man, clusterlist ):
     gcluster = get_clusters_raw(  man )
     #print 'CLUSTERLIST', clusterlist
@@ -1060,10 +1135,12 @@ def appendClusterList( man, clusterlist ):
     #print "RES CLUSTER LIST:", clusterlist
 
 
+
 def get_clusters_raw(  man ):
     res = man.getClusterNames()
     #print 'get_clusters_raw', res
     return res
+
 
 
 def check_get_data(man, ref, chrom, request):
@@ -1172,6 +1249,7 @@ def check_get_data(man, ref, chrom, request):
     return (ref, chrom, startPos, endPos, group_every, num_classes, evenly, maxNum, page)
 
 
+
 def get_data_raw(man, ref, chrom, startPos, endPos, group_every, num_classes, evenly, maxNum=None, page=None):
     res =   {
                 'request' : {
@@ -1208,6 +1286,7 @@ def get_data_raw(man, ref, chrom, startPos, endPos, group_every, num_classes, ev
     #print "TABLE", table
 
     return table
+
 
 
 def filterClusters(data, method):
@@ -1264,12 +1343,14 @@ def filterClusters(data, method):
         #        print "cls", cls,"rc",rc,'rct',rct,'rctName',rctName,method,'FINISHED'
 
 
+
 def getManager(db_name):
     if db_name not in DATABASEINV:
         print "db",db_name,"does not exists"
         abort(404)
 
     return DATABASES[ DATABASEINV[db_name] ][ DATABASES_INTERFACE ]
+
 
 
 def init_db():
@@ -1302,7 +1383,7 @@ def init_db():
                 """
                 Loads each database, get creation date and initialize interface
                 """
-                db      = DATABASES[dbp]
+                db      =     DATABASES[ dbp ]
                 dbname  = db[ DATABASES_DB_NAME   ]
                 dbfname = db[ DATABASES_DB_F_NAME ]
                 dbconf  = db[ DATABASES_DB_CONF   ]
@@ -1397,6 +1478,42 @@ def read_nfo( db_title, db_nfo, path='.' ):
     return ( title, conf )
 
 
+
+#http://stackoverflow.com/questions/20646822/how-to-serve-static-files-in-flask
+def root_dir():  # pragma: no cover
+    return os.path.abspath(os.path.dirname(__file__))
+
+
+
+def get_file(filename):  # pragma: no cover
+    try:
+        src = os.path.join(root_dir(), filename)
+        # Figure out how flask returns static files
+        # Tried:
+        # - render_template
+        # - send_file
+        # This should not be so non-obvious
+        return open(src).read()
+    except IOError as exc:
+        return str(exc)
+
+#    complete_path = os.path.join(root_dir(), "static", "login.html")
+#    mimetype      = "text/html"
+#    content       = get_file(complete_path)
+#    return Response(content, mimetype=mimetype)
+
+
+def add_default_users():
+    for cred in credentials:
+        pwd    = credentials[cred][0]
+        noonce = credentials[cred][1]
+        try:
+            add_user(cred, pwd, noonce)
+        except:
+            print "default user %s already exists" % cred
+
+
+
 load_database()
 #app.debug = True #DEBUG
 app.debug = False #DEBUG
@@ -1404,8 +1521,53 @@ app.debug = DEBUG
 app.before_first_request(init_db)
 
 
+
 def main():
-    app.run(port=SERVER_PORT, host='0.0.0.0')
+    if not os.path.exists(app.config['DATABASE_FILE']):
+        user_db.drop_all()
+        user_db.create_all()
+
+    add_default_users()
+
+    if len(sys.argv) > 1:
+        actions = ("adduser", "genuser")
+
+        try:
+            action   = sys.argv[1]
+            username = sys.argv[2]
+            password = sys.argv[3]
+
+        except:
+            print "not enought arguments"
+            sys.exit(1)
+
+
+
+        if action not in actions:
+            print "invalid action %s" % action
+            sys.exit(1)
+
+
+        noonce = gen_noonce()
+        pwd    = generate_password_hash(username + password + noonce)
+
+        if   action == "adduser":
+            if check_user_exists(username):
+                print "user %s already exists" % username
+                sys.exit(1)
+
+            try:
+                add_user(username, pwd, noonce)
+
+            except KeyError:
+                print "user %s already exists" % username
+                sys.exit(1)
+
+        elif action == "genuser":
+            print "username", username, "pass", pwd, "salt", noonce
+
+    else:
+        app.run(port=SERVER_PORT, host='0.0.0.0')
 
 
 

@@ -2,6 +2,7 @@
 *.db
 *.sql
 *.log
+*.sqlite
 pypy
 tosql
 win/
@@ -23,5 +24,4 @@ lin/
 nohup.out
 *.tar.gz
 checkout
-excluder
-rsync
+.sync/

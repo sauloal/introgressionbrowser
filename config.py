@@ -3,17 +3,21 @@ bin_path = os.path.abspath( __file__ )
 dir_path = os.path.dirname( bin_path )
 
 #decide whether to have user control or not
-hasLogin    = False
+hasLogin    = True
 
 #add credentials
 credentials = {
-	'xxx'   : 'yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy',
+        #USERNAME  PASSWORD                                                                                            SALT
+        'admin': ( '7757602374ab397a75f728d6dad7516fe464fc2d6a39135febb2863a412b0a1b1b513a20e6c3e9f97554602bba9aa3d3', 'f9b74f3d07e2879449e5541372e47f17aeb724017dbe00426a8d54a6a330c1ad0abfb898a0eec98ad3e66ae027609795' )
 }
 
 
-#to create passwords, in the command line, run python in interactive mode and type:
-#import hashlib
-#hashlib.sha256("<LOGIN><PASSWORD>").hexdigest()
+#to add users in the command line run:
+#ibrowser adduser <USERNAME> <PASSWORD>
+#to create default users in the command line, run:
+#ibrowser genuser <USERNAME> <PASSWORD>
+# then, copy the information in credentials
+
 
 
 

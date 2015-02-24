@@ -1,4 +1,5 @@
 print "importing sqlalchemy"
+
 from sqlalchemy.ext.declarative import declarative_base
 #from sqlalchemy.orm             import sessionmaker, relationship, backref
 from sqlalchemy.orm             import sessionmaker
@@ -19,6 +20,7 @@ def getsession(db_file, echo=False):
     engine    = create_engine('sqlite:///'+db_file, echo=echo )
     Session   = sessionmaker(bind=engine)
     session   = Session()
+    session._model_changes = {}
 
     """
     Create database strucuture

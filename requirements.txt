@@ -2,6 +2,7 @@ flask
 ete2
 sqlalchemy
 pysha3
+rsa
 
 ##if not in the system
 #Pillow

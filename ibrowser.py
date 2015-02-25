@@ -26,6 +26,8 @@ import sys
 import io
 import base64
 import glob
+import rsa
+
 from operator import itemgetter
 
 
@@ -42,7 +44,7 @@ print "importing flask"
 from flask       import Flask, request, session, send_file, escape, g, redirect, url_for, abort, render_template, flash, make_response, jsonify, Markup, Response, send_from_directory, Blueprint, json
 
 print "importing jinja2"
-from jinja2      import TemplateNotFound
+from jinja2      import TemplateNotFound, Markup
 
 
 bin_path = os.path.abspath( __file__ )
@@ -65,6 +67,7 @@ MAX_CONTENT_LENGTH        = 128 * 1024 * 1024
 USE_SQL                   = True
 INFOLDER                  = None
 DATABASEINV               = {}
+RSA_KEY_SIZE              = 2048
 
 
 DATABASES                 = []
@@ -123,6 +126,9 @@ librepoints = [
 loaded    = False
 
 
+
+
+
 app                                         = Flask(__name__)
 app.config.from_object(__name__)
 app.jinja_env.globals['trim_blocks'       ] = True
@@ -130,6 +136,56 @@ app.jinja_env.add_extension('jinja2.ext.do')
 app.config['MAX_CONTENT_LENGTH']            = MAX_CONTENT_LENGTH
 #jsonpickle.set_preferred_backend('simplejson')
 #jsonpickle.set_encoder_options('simplejson', ensure_ascii=True, sort_keys=True, indent=1)
+
+
+rsa_private_key_file_name = os.path.join( "templates", 'rsa_%d_priv.pem' % RSA_KEY_SIZE )
+rsa_public_key_file_name  = os.path.join( "templates", 'rsa_%d_pub.pem'  % RSA_KEY_SIZE )
+
+if ( not os.path.exists( rsa_private_key_file_name ) ):
+    print "RSA private key %s does not exists. please create it by entering the 'templates' folder and running gen_key.sh" % rsa_private_key_file_name
+    sys.exit(1)
+
+if ( not os.path.exists( rsa_public_key_file_name ) ):
+    print "RSA public key %s does not exists. please create it by entering the 'templates' folder and running gen_key.sh" % rsa_public_key_file_name
+    sys.exit(1)
+
+rsa_private_key_data = open(rsa_private_key_file_name, 'r').read()
+rsa_public_key_data  = open(rsa_public_key_file_name , 'r').read()
+
+rsa_private_key      = rsa.PrivateKey.load_pkcs1(            rsa_private_key_data )
+rsa_public_key       = rsa.PublicKey.load_pkcs1_openssl_pem( rsa_public_key_data  )
+
+
+def encrypter(message):
+    return base64.b64encode( rsa.encrypt(message, rsa_public_key ) )
+
+def decrypter(message):
+    return rsa.decrypt(base64.b64decode( message ), rsa_private_key)
+
+message     = "test"
+encmess     = encrypter(message)
+decmess     = decrypter(encmess)
+
+print "message ", message
+print "encmess ", encmess
+print "decmess ", decmess
+
+#sys.exit(0)
+
+#http://stackoverflow.com/questions/9767585/insert-static-files-literally-into-jinja-templates-without-parsing-them
+def include_file(name):
+    return Markup(app.jinja_loader.get_source(app.jinja_env, name)[0])
+
+def include_file_multiline(name):
+    lines     = app.jinja_loader.get_source(app.jinja_env, name)[0].split("\n")
+    lines     = [ "'" + l + "\\n' +" for l in lines ]
+    lines[-1] = lines[-1].strip(" +")
+    return Markup("\n".join( lines ))
+
+app.jinja_env.globals['include_file'          ] = include_file
+app.jinja_env.globals['include_file_multiline'] = include_file_multiline
+app.jinja_env.globals['encbitsize'            ] = str( RSA_KEY_SIZE )
+
 
 
 
@@ -208,6 +264,10 @@ def login():
             username = request.form.get('username', None)
             password = request.form.get('password', None)
             noonce   = request.form.get('noonce'  , None)
+
+            if password is not None:
+                password = decrypter( password )
+
             print "login: has config - POST - username %s password %s noonce %s" % ( username, password, noonce )
 
             if username is not None and password is not None and noonce is not None and "noonce" in session and noonce == session["noonce"]:
@@ -254,14 +314,21 @@ def admin():
         noonce   = request.form.get('noonce'  , None)
         security = request.form.get('security', None)
 
+        if password is not None:
+            password = decrypter( password )
+
         print "admin: has config - POST - action %s username %s password %s noonce %s security %s" % tuple([ str(x) for x in ( action, username, password, noonce, security ) ])
 
         if username is not None and action is not None and noonce is not None and username != "admin" and "noonce" in session and noonce == session["noonce"]:
             if action == "add":
                 print "admin: has config - POST. ADDING USER"
-                if password is None:
+                if password is None or generate_password_hash(username+noonce) == password:
                     print "admin: has config - POST - not none. noonce match. NO PASSWORD"
                     message = "FAILED TO ADD USER %s. NO PASSWORD" % username
+
+                elif not str(username).isalnum():
+                    print "admin: has config - POST - not none. noonce match. INVALID USERNAME"
+                    message = "FAILED TO ADD USER %s. INVALID USERNAME" % username
 
                 else:
                     print "admin: has config - POST - not none. noonce match"

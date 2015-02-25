@@ -71,12 +71,8 @@ window.onload = function () {
 
 
   document.getElementById('form').onsubmit = function() {
-    //var noonce = new Date().getTime() + '' + new Date().getMilliseconds();
-    //var hash = CryptoJS.SHA512("Message");
-
     var username = document.getElementById('username').value;
     //console.log("username   : ", username);
-    //console.log("username   : ", username.value);
 
     get_json( "/salt/"+username, function(data) {
         console.log("salt ", data);
@@ -102,15 +98,16 @@ window.onload = function () {
         var up         = username + password + salt;
         console.log("up         : ", up);
 
-	//CryptoJS.SHA512(up).toString(CryptoJS.enc.Hex)
-        var cryptPass  = encrypter(up);
+        var cryptPass  = hasher(up);
         console.log("cryptPass  : ", cryptPass);
 
-        var res        = encrypter(noonce + cryptPass);
+        var res        = hasher(noonce + cryptPass);
 
         console.log("res        : ", res);
 
-        document.getElementById('password').value = res;
+        //document.getElementById('password').value = res;
+
+        document.getElementById('password').value = encrypter.encrypt( res );
 
         document.getElementById('form').submit();
         return false;
@@ -120,6 +117,7 @@ window.onload = function () {
   };
 };
         </script>
-{% include 'crypto.html' %}
+{% include 'crypto.html' without context %}
+
     </footer>
 </html>

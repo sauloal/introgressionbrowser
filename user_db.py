@@ -45,6 +45,9 @@ class User(user_db.Model):
     def __unicode__(self):
         return self.login
 
+    def __repr__(self):
+        return "<User id %s first_name %s last_name %s login %s email %s password %s salt %s>" % \
+        tuple([str(x) for x in [ self.id, self.first_name, self.last_name, self.login, self.email, self.password, self.salt]])
 
 
 
@@ -90,7 +93,7 @@ def verify_user_credentials(username, password, noonce):
     user = get_user( username )
     pwd  = user.password
     cry  = generate_password_hash(noonce+pwd)
-    print "user %s pwd %s cry %s password %s" % ( user, pwd, cry, password )
+    print "verify_user_credentials: user %s pwd %s cry %s password %s" % ( user, pwd, cry, password )
 
     if cry == password:
         return True
@@ -115,5 +118,3 @@ def generate_password_hash(seq):
 
 def gen_noonce():
     return generate_password_hash( str(random.randint(0, sys.maxint)) + str(time.time()) + str(datetime.now().microsecond) )
-
-

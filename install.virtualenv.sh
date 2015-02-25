@@ -17,6 +17,8 @@ sqlalchemy
 numpy
 scipy
 matplotlib
+pysha3
+rsa
 #MySQL-python
 
 

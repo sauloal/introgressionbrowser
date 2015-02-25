@@ -8,5 +8,6 @@ easy_install --user PIL
 easy_install --user Image
 easy_install --user sqlalchemy
 easy_install --user pysha3
+easy_install --user rsa
 
 ln -s ibrowser.conf /etc/apache2/mods-available/ibrowser.conf

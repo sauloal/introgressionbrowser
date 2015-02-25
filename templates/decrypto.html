@@ -1,0 +1,8 @@
+        <script type="text/javascript">
+                var decrypter = new JSEncrypt();
+                var privkey   = {{ include_file_multiline('rsa_'+encbitsize+'_priv.pem') }};
+                decrypter.setPrivateKey( privkey );
+                var decrypted = decrypter.decrypt( encrypted );
+                console.log( "decrypted ", decrypted );
+        </script>
+

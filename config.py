@@ -24,6 +24,13 @@ credentials = {
         'admin': ( '7757602374ab397a75f728d6dad7516fe464fc2d6a39135febb2863a412b0a1b1b513a20e6c3e9f97554602bba9aa3d3', 'f9b74f3d07e2879449e5541372e47f17aeb724017dbe00426a8d54a6a330c1ad0abfb898a0eec98ad3e66ae027609795' )
 }
 
+#to add users in the command line run:
+#ibrowser adduser <USERNAME> <PASSWORD>
+#to create default users in the command line, run:
+#ibrowser genuser <USERNAME> <PASSWORD>
+# then, copy the information in credentials
+
+
 #define port to server webpage
 SERVER_PORT               = 10000
 
@@ -48,3 +55,4 @@ INFOLDER                  = os.path.join( dir_path, "data" )
 DEBUG                     = False
 MAX_NUMBER_OF_COLUMNS     = 300
 MAX_CONTENT_LENGTH        = 128 * 1024 * 1024
+RSA_KEY_SIZE              = 2048

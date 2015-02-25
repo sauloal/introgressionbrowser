@@ -103,7 +103,7 @@
     noonce_field.setAttribute("value", noonce   );
     form.appendChild(noonce_field);
 
-    var security   = encrypter("del"+username+noonce);
+    var security   = hasher("del"+username+noonce);
 
     document.body.appendChild(form);
     form.submit();
@@ -132,8 +132,8 @@
     var up         = username + password + noonce;
     //console.log("up         : ", up);
 
-    var cryptPass  = encrypter(up              );
-    var security   = encrypter(cryptPass+noonce);
+    var cryptPass  = hasher(up              );
+    var security   = hasher(cryptPass+noonce);
 
     //console.log("cryptPass  : ", cryptPass);
 
@@ -156,7 +156,7 @@
     var pass_field = document.createElement("input");
     pass_field.setAttribute("type" , "hidden"  );
     pass_field.setAttribute("name" , "password");
-    pass_field.setAttribute("value", cryptPass );
+    pass_field.setAttribute("value", encrypter.encrypt( cryptPass ));
     form.appendChild(pass_field);
 
     var noonce_field = document.createElement("input");
@@ -215,6 +215,6 @@
 //}
         </script>
 
-{% include 'crypto.html' %}
+{% include 'crypto.html' without context %}
     </footer>
 </html>

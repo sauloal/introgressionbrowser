@@ -138,37 +138,41 @@ app.config['MAX_CONTENT_LENGTH']            = MAX_CONTENT_LENGTH
 #jsonpickle.set_encoder_options('simplejson', ensure_ascii=True, sort_keys=True, indent=1)
 
 
-rsa_private_key_file_name = os.path.join( "templates", 'rsa_%d_priv.pem' % RSA_KEY_SIZE )
-rsa_public_key_file_name  = os.path.join( "templates", 'rsa_%d_pub.pem'  % RSA_KEY_SIZE )
+if hasLogin:
+    rsa_private_key_file_name = os.path.join( "templates", 'rsa_%d_priv.pem' % RSA_KEY_SIZE )
+    rsa_public_key_file_name  = os.path.join( "templates", 'rsa_%d_pub.pem'  % RSA_KEY_SIZE )
 
-if ( not os.path.exists( rsa_private_key_file_name ) ):
-    print "RSA private key %s does not exists. please create it by entering the 'templates' folder and running gen_key.sh" % rsa_private_key_file_name
-    sys.exit(1)
+    if ( not os.path.exists( rsa_private_key_file_name ) ):
+        print "RSA private key %s does not exists. please create it by entering the 'templates' folder and running gen_key.sh" % rsa_private_key_file_name
+        sys.exit(1)
 
-if ( not os.path.exists( rsa_public_key_file_name ) ):
-    print "RSA public key %s does not exists. please create it by entering the 'templates' folder and running gen_key.sh" % rsa_public_key_file_name
-    sys.exit(1)
+    if ( not os.path.exists( rsa_public_key_file_name ) ):
+        print "RSA public key %s does not exists. please create it by entering the 'templates' folder and running gen_key.sh" % rsa_public_key_file_name
+        sys.exit(1)
 
-rsa_private_key_data = open(rsa_private_key_file_name, 'r').read()
-rsa_public_key_data  = open(rsa_public_key_file_name , 'r').read()
+    rsa_private_key_data = open(rsa_private_key_file_name, 'r').read()
+    rsa_public_key_data  = open(rsa_public_key_file_name , 'r').read()
 
-rsa_private_key      = rsa.PrivateKey.load_pkcs1(            rsa_private_key_data )
-rsa_public_key       = rsa.PublicKey.load_pkcs1_openssl_pem( rsa_public_key_data  )
+    rsa_private_key      = rsa.PrivateKey.load_pkcs1(            rsa_private_key_data )
+    rsa_public_key       = rsa.PublicKey.load_pkcs1_openssl_pem( rsa_public_key_data  )
 
 
-def encrypter(message):
-    return base64.b64encode( rsa.encrypt(message, rsa_public_key ) )
+    def encrypter(message):
+        return base64.b64encode( rsa.encrypt(message, rsa_public_key ) )
 
-def decrypter(message):
-    return rsa.decrypt(base64.b64decode( message ), rsa_private_key)
+    def decrypter(message):
+        return rsa.decrypt(base64.b64decode( message ), rsa_private_key)
 
-message     = "test"
-encmess     = encrypter(message)
-decmess     = decrypter(encmess)
+    message     = "test"
+    encmess     = encrypter(message)
+    decmess     = decrypter(encmess)
 
-print "message ", message
-print "encmess ", encmess
-print "decmess ", decmess
+    print "message ", message
+    print "encmess ", encmess
+    print "decmess ", decmess
+
+
+
 
 #sys.exit(0)
 
@@ -292,10 +296,13 @@ def login():
                 print "login: has config - POST - not none. noonce does not match", noonce, ( session["noonce"] if "noonce" in session else None )
                 message = "TRY AGAIN"
 
-    session["noonce"] = gen_noonce()
-    print "new noonce", session["noonce"]
-    return render_template('login.html', noonce=session["noonce"], message=message)
-    #return app.send_static_file('login.html')
+        session["noonce"] = gen_noonce()
+        print "new noonce", session["noonce"]
+        return render_template('login.html', noonce=session["noonce"], message=message)
+        #return app.send_static_file('login.html')
+
+    else:
+        return redirect(url_for('get_main', _external=True))
 
 
 @app.route('/admin', methods=['GET', 'POST'])
@@ -306,69 +313,72 @@ def admin():
 
     message = None
     #print "login"
-    if hasConfig and credentials and hasLogin and request.method == 'POST':
-        print "admin: has config - POST"
-        action   = request.form.get('action'  , None)
-        username = request.form.get('username', None)
-        password = request.form.get('password', None)
-        noonce   = request.form.get('noonce'  , None)
-        security = request.form.get('security', None)
+    if hasConfig and credentials and hasLogin:
+        if request.method == 'POST':
+            print "admin: has config - POST"
+            action   = request.form.get('action'  , None)
+            username = request.form.get('username', None)
+            password = request.form.get('password', None)
+            noonce   = request.form.get('noonce'  , None)
+            security = request.form.get('security', None)
 
-        if password is not None:
-            password = decrypter( password )
+            if password is not None:
+                password = decrypter( password )
 
-        print "admin: has config - POST - action %s username %s password %s noonce %s security %s" % tuple([ str(x) for x in ( action, username, password, noonce, security ) ])
+            print "admin: has config - POST - action %s username %s password %s noonce %s security %s" % tuple([ str(x) for x in ( action, username, password, noonce, security ) ])
 
-        if username is not None and action is not None and noonce is not None and username != "admin" and "noonce" in session and noonce == session["noonce"]:
-            if action == "add":
-                print "admin: has config - POST. ADDING USER"
-                if password is None or generate_password_hash(username+noonce) == password:
-                    print "admin: has config - POST - not none. noonce match. NO PASSWORD"
-                    message = "FAILED TO ADD USER %s. NO PASSWORD" % username
+            if username is not None and action is not None and noonce is not None and username != "admin" and "noonce" in session and noonce == session["noonce"]:
+                if action == "add":
+                    print "admin: has config - POST. ADDING USER"
+                    if password is None or generate_password_hash(username+noonce) == password:
+                        print "admin: has config - POST - not none. noonce match. NO PASSWORD"
+                        message = "FAILED TO ADD USER %s. NO PASSWORD" % username
 
-                elif not str(username).isalnum():
-                    print "admin: has config - POST - not none. noonce match. INVALID USERNAME"
-                    message = "FAILED TO ADD USER %s. INVALID USERNAME" % username
+                    elif not str(username).isalnum():
+                        print "admin: has config - POST - not none. noonce match. INVALID USERNAME"
+                        message = "FAILED TO ADD USER %s. INVALID USERNAME" % username
 
-                else:
-                    print "admin: has config - POST - not none. noonce match"
+                    else:
+                        print "admin: has config - POST - not none. noonce match"
+
+                        if check_user_exists(username):
+                        #if username in credentials:
+                            print "admin: has config - POST - not none - user in credentials. ALREADY EXISTS"
+                            message = "FAILED TO ADD USER %s. ALREADY EXISTS" % username
+
+                        else:
+                            if security is None or security != generate_password_hash(password+noonce):
+                                print "admin: has config - POST - not none. SECURITY FAILED %s vs %s" % (str(security), generate_password_hash(password+noonce))
+                                message = "FAILED TO ADD USER %s. SECURITY FAILED" % ( username )
+
+                            else:
+                                print "admin: has config - POST - not none - user not in credentials. ADDING user %s pass %s salt %s" % ( username, password, noonce )
+                                #credentials[username] = password
+                                add_user(username, password, noonce)
+                                message = "SUCCESS IN ADDING USER %s" % ( username )
+
+                elif action == "del":
+                    print "admin: has config - POST - not none. noonce match. DELETING USER:", username
 
                     if check_user_exists(username):
                     #if username in credentials:
-                        print "admin: has config - POST - not none - user in credentials. ALREADY EXISTS"
-                        message = "FAILED TO ADD USER %s. ALREADY EXISTS" % username
+                        del_user(username)
+                        #del credentials[username]
+                        message = "SUCCESS IN DELETING USER %s" % username
 
                     else:
-                        if security is None or security != generate_password_hash(password+noonce):
-                            print "admin: has config - POST - not none. SECURITY FAILED %s vs %s" % (str(security), generate_password_hash(password+noonce))
-                            message = "FAILED TO ADD USER %s. SECURITY FAILED" % ( username )
+                        message = "FAILED TO DELETE USER '%s'. DOES NOT EXISTS" % username
 
-                        else:
-                            print "admin: has config - POST - not none - user not in credentials. ADDING user %s pass %s salt %s" % ( username, password, noonce )
-                            #credentials[username] = password
-                            add_user(username, password, noonce)
-                            message = "SUCCESS IN ADDING USER %s" % ( username )
+            else:
+                message = "TRY AGAIN"
 
-            elif action == "del":
-                print "admin: has config - POST - not none. noonce match. DELETING USER:", username
+        session["noonce"] = gen_noonce()
+        print "new noonce", session["noonce"]
+        return render_template('admin.html', users=[x for x in sorted(get_users()) if x != "admin"], message=message, noonce=session["noonce"])
+        #return app.send_static_file('login.html')
 
-                if check_user_exists(username):
-                #if username in credentials:
-                    del_user(username)
-                    #del credentials[username]
-                    message = "SUCCESS IN DELETING USER %s" % username
-
-                else:
-                    message = "FAILED TO DELETE USER '%s'. DOES NOT EXISTS" % username
-
-        else:
-            message = "TRY AGAIN"
-
-
-    session["noonce"] = gen_noonce()
-    print "new noonce", session["noonce"]
-    return render_template('admin.html', users=[x for x in sorted(get_users()) if x != "admin"], message=message, noonce=session["noonce"])
-    #return app.send_static_file('login.html')
+    else:
+        return redirect(url_for('get_main', _external=True))
 
 
 @app.route('/salt/<username>', methods=['GET'])
@@ -383,7 +393,10 @@ def getsalt(username):
         if check_user_exists(username):
             salt = get_salt(username)
 
-    return jsonify({'salt' : salt})
+        return jsonify({'salt' : salt})
+
+    else:
+        return jsonify({'salt' : 'peper'})
 
 
 @app.route('/logout', methods=['GET'])
@@ -397,19 +410,25 @@ def logout():
         print "logoff from user %s: has config" % str(session['username'])
         session.pop('username', None)
 
-    #return redirect(url_for('get_main'))
-    return redirect(url_for('login', _external=True))
+        #return redirect(url_for('get_main'))
+        return redirect(url_for('login', _external=True))
+
+    else:
+        return redirect(url_for('get_main', _external=True))
 
 
 @app.route("/username", methods=['GET'])
 def get_username():
-    return jsonify({'username': session['username']})
+    if hasLogin:
+        return jsonify({'username': session['username']})
+    else:
+        return jsonify({'username': 'libre'})
 
 
 @app.route("/", methods=['GET'])
 def get_main():
     #return redirect ( url_for('static', filename='index.html' ) )
-    if session['username'] == 'admin':
+    if hasLogin and session['username'] == 'admin':
         return redirect(url_for('admin', _external=True))
 
     return app.send_static_file('index.html')
@@ -1590,13 +1609,18 @@ app.before_first_request(init_db)
 
 
 def main():
-    if not os.path.exists(app.config['DATABASE_FILE']):
-        user_db.drop_all()
-        user_db.create_all()
+    if hasLogin:
+        if not os.path.exists(app.config['DATABASE_FILE']):
+            user_db.drop_all()
+            user_db.create_all()
 
-    add_default_users()
+        add_default_users()
 
     if len(sys.argv) > 1:
+        if not hasLogin:
+            print "no login, no add/gen user"
+            sys.exit(1)
+
         actions = ("adduser", "genuser")
 
         try:

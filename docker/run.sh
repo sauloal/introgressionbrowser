@@ -10,5 +10,5 @@ docker run -it --rm \
 -p 0.0.0.0:9000:10000 \
 --hostname="assembly.ab.wurnet.nl" \
 --name ibrowser \
-sauloal/ibrowser
+sauloal/introgressionbrowser
 

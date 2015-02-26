@@ -4,6 +4,35 @@ Web server for the Introgression browser.
 Reads config.py to setup.
 Uses vcf_walk as shared library and either vcf_walk_ram or vcf_walk_sql as database.
 
+
+#add credentials
+#
+#default credentials. Admin is compulsory
+#login: admin pass: admin
+#
+#to add users in the command line run:
+#ibrowser adduser <USERNAME> <PASSWORD>
+#
+#to create default users in the command line, run:
+#ibrowser genuser <USERNAME> <PASSWORD>
+# then, copy the information in credentials
+# eg: ./ibrowser.py genuser admin admin
+#     username admin pass 5fa21eab20861e9f01f0f577bee378cf31b5b933090df492dbf0b05870096459cd2cb270ce0ca25ddb2ebfed7828a7b1 salt 6086e5c03e6e7cdb0899419b5653b485903d50d5cf14cd346e2036c510884df028c257eecc543908c35d83e6c6858c3f
+#password and salt will change with each run
+credentials = {
+    #USERNAME  PASSWORD                                                                                                                            SALT
+    'admin': ( '23a08ce2515be0762c225dbe736fa585a25c49b25183c957eb3d08403818faa5413cebd3cfafc30fb59898b675c6243cb8499cc312cfb6b4699c1695168c8cbf', 'b245309a4d7958de36ecf384b6bed5b37781172c84c54ac5cf31f169131679cad082483baf06333a2dcceaf0400b47988e05e03e2c0431c7df2e7a1c6ad46b8f' )
+}
+
+
+#to add users in the command line run:
+#ibrowser adduser <USERNAME> <PASSWORD>
+#to create default users in the command line, run:
+#ibrowser genuser <USERNAME> <PASSWORD>
+# then, copy the information in credentials
+
+
+
 NFO FILE:
 title=
 custom_order=
@@ -32,10 +61,14 @@ from operator import itemgetter
 
 
 
-currpath = os.path.dirname( os.path.abspath( __file__ ) )
-print "CURRPATH ", currpath
-sys.path.insert(0, currpath )
-sys.path.insert(0, os.path.join(currpath, "venv/lib/python2.7/site-packages") )
+bin_path = os.path.abspath( __file__ )
+dir_path = os.path.dirname( bin_path )
+print "dir_path ", dir_path
+sys.path.insert(0, dir_path )
+sys.path.insert(0, os.path.join(dir_path, "venv/lib/python2.7/site-packages") )
+
+secret_file      = os.path.join( dir_path, "config.secret"      )
+keylen_file      = os.path.join( dir_path, "config.keylen"      )
 
 
 
@@ -46,9 +79,6 @@ from flask       import Flask, request, session, send_file, escape, g, redirect,
 print "importing jinja2"
 from jinja2      import TemplateNotFound, Markup
 
-
-bin_path = os.path.abspath( __file__ )
-dir_path = os.path.dirname( bin_path )
 
 #TODO:
 #      ADD OPTION FOR MAX_NUMBER_OF_COLUMNS
@@ -61,13 +91,10 @@ DEBUG                     = True
 IDEBUG                    = False
 MAX_NUMBER_OF_COLUMNS     = 300
 SERVER_PORT               = 10000
-SECRET_KEY                = "development key"
-SECRET_KEY                = '\xe1:\xbf\xc2\xaa\x0b\x04\xb8\xac\xc1\xff;Z-W\xfcRE\xadY"K\xa1v'
 MAX_CONTENT_LENGTH        = 128 * 1024 * 1024
 USE_SQL                   = True
 INFOLDER                  = None
 DATABASEINV               = {}
-RSA_KEY_SIZE              = 2048
 
 
 DATABASES                 = []
@@ -78,9 +105,8 @@ DATABASES_MTIME           = 3
 DATABASES_INTERFACE       = 4
 
 config                    = os.path.join( dir_path, 'config.py' )
-hasConfig                 = False
 hasLogin                  = False
-credentials               = None
+librepaths                = []
 
 
 
@@ -88,15 +114,40 @@ if not os.path.exists( config ):
     print "config does not exists"
     sys.exit( 1 )
 
-else:
-    hasConfig = True
-    execfile(config)
+execfile(config)
+
 
 
 
 if INFOLDER is None:
     print "no input folder given"
     sys.exit( 1 )
+
+if not os.path.exists( INFOLDER ):
+    print "input folder %s does not exists" % INFOLDER
+    sys.exit(1)
+
+if not os.path.isdir( INFOLDER ):
+    print "input folder %s is not a folder" % INFOLDER
+    sys.exit(1)
+
+
+
+if not os.path.exists( secret_file ):
+    print "secret file %s does not exists. CREATING" % secret_file
+    secret = os.urandom(24)
+    open(secret_file, 'wb').write(secret)
+
+if not os.path.exists( keylen_file ):
+    print "keylen file %s does not exists. CREATING with default %d" % ( keylen_file, 2048 )
+    open(keylen_file, 'w').write(str(2048))
+
+SECRET_KEY                =     open(secret_file     , 'rb').read().strip()
+RSA_KEY_SIZE              = int(open(keylen_file     , 'r' ).read())
+
+print "SECRET KEY  ", repr(SECRET_KEY)
+print "RSA_KEY_SIZE", RSA_KEY_SIZE
+
 
 
 
@@ -113,10 +164,6 @@ else:
 
 
 
-librepaths = [ # pages which can be seen without login
-    '/api',
-    '/favicon.ico'
-]
 librepoints = [
     'login',
     'logout',
@@ -211,7 +258,7 @@ def before_request():
     If using WSGI (eg. apache), this won't work
     """
     #print "before request", request.url, request.base_url, request.url_root, request.endpoint
-    if hasConfig and credentials and hasLogin:
+    if hasLogin:
         #if get_users() > 0:
 
         #print "before request: has config"
@@ -261,7 +308,7 @@ def login():
     """
     #print "login"
     message = ""
-    if hasConfig and credentials and hasLogin:
+    if hasLogin:
         #print "login: has config"
         if request.method == 'POST':
             #print "login: has config - POST"
@@ -276,10 +323,7 @@ def login():
 
             if username is not None and password is not None and noonce is not None and "noonce" in session and noonce == session["noonce"]:
                 print "login: has config - POST - not none. noonce match"
-                #if username in credentials:
                 if check_user_exists(username):
-                    print "login: has config - POST - not none - user in credentials"
-                    #pwd = credentials[username]
                     print "login: has config - POST - not none - user in credentials - username %s password %s noonce %s" % ( username, password, noonce )
 
                     if verify_user_credentials(username, password, noonce):
@@ -313,7 +357,7 @@ def admin():
 
     message = None
     #print "login"
-    if hasConfig and credentials and hasLogin:
+    if hasLogin:
         if request.method == 'POST':
             print "admin: has config - POST"
             action   = request.form.get('action'  , None)
@@ -342,7 +386,6 @@ def admin():
                         print "admin: has config - POST - not none. noonce match"
 
                         if check_user_exists(username):
-                        #if username in credentials:
                             print "admin: has config - POST - not none - user in credentials. ALREADY EXISTS"
                             message = "FAILED TO ADD USER %s. ALREADY EXISTS" % username
 
@@ -353,7 +396,6 @@ def admin():
 
                             else:
                                 print "admin: has config - POST - not none - user not in credentials. ADDING user %s pass %s salt %s" % ( username, password, noonce )
-                                #credentials[username] = password
                                 add_user(username, password, noonce)
                                 message = "SUCCESS IN ADDING USER %s" % ( username )
 
@@ -361,9 +403,7 @@ def admin():
                     print "admin: has config - POST - not none. noonce match. DELETING USER:", username
 
                     if check_user_exists(username):
-                    #if username in credentials:
                         del_user(username)
-                        #del credentials[username]
                         message = "SUCCESS IN DELETING USER %s" % username
 
                     else:
@@ -389,7 +429,7 @@ def getsalt(username):
     print "get user %s salt" % username
 
     salt = None
-    if hasConfig and credentials and hasLogin:
+    if hasLogin:
         if check_user_exists(username):
             salt = get_salt(username)
 
@@ -406,7 +446,7 @@ def logout():
     """
     print "logoff"
 
-    if hasConfig and credentials and hasLogin and 'username' in session:
+    if hasLogin and 'username' in session:
         print "logoff from user %s: has config" % str(session['username'])
         session.pop('username', None)
 
@@ -1590,21 +1630,20 @@ def get_file(filename):  # pragma: no cover
 
 
 def add_default_users():
-    for cred in credentials:
-        pwd    = credentials[cred][0]
-        noonce = credentials[cred][1]
+    if not check_user_exists("admin"):
+        print "admin user does not exists. CREATING admin user with default password admin"
+
+        noonce = gen_noonce()
+        pwd    = generate_password_hash("admin" + "admin" + noonce)
+
         try:
-            add_user(cred, pwd, noonce)
+            add_user(username, pwd, noonce)
+
         except:
-            print "default user %s already exists" % cred
+            print "failed to add default user ADMIN. cannont continue"
+            raise
 
 
-
-load_database()
-#app.debug = True #DEBUG
-app.debug = False #DEBUG
-app.debug = DEBUG
-app.before_first_request(init_db)
 
 
 
@@ -1614,19 +1653,20 @@ def main():
             user_db.drop_all()
             user_db.create_all()
 
-        add_default_users()
 
     if len(sys.argv) > 1:
         if not hasLogin:
             print "no login, no add/gen user"
             sys.exit(1)
 
-        actions = ("adduser", "genuser")
+        actions = ("adduser", "deluser", "listusers", "init")
 
         try:
             action   = sys.argv[1]
-            username = sys.argv[2]
-            password = sys.argv[3]
+            if action in ["adduser", "deluser"]:
+                username = sys.argv[2]
+                if action in ["adduser"]:
+                    password = sys.argv[3]
 
         except:
             print "not enought arguments"
@@ -1639,10 +1679,14 @@ def main():
             sys.exit(1)
 
 
-        noonce = gen_noonce()
-        pwd    = generate_password_hash(username + password + noonce)
 
-        if   action == "adduser":
+        if   action == "init":
+            pass
+
+        elif action == "adduser":
+            noonce = gen_noonce()
+            pwd    = generate_password_hash(username + password + noonce)
+
             if check_user_exists(username):
                 print "user %s already exists" % username
                 sys.exit(1)
@@ -1654,10 +1698,28 @@ def main():
                 print "user %s already exists" % username
                 sys.exit(1)
 
-        elif action == "genuser":
-            print "username", username, "pass", pwd, "salt", noonce
+        elif action == "deluser":
+            print "deleting user %s" % username
+            if check_user_exists(username):
+                del_user(username)
+
+            else:
+                print "user %s does not exists" % username
+                sys.exit(1)
+
+        elif action == "listusers":
+            print "listing users"
+            print "\n".join(get_users())
 
     else:
+        add_default_users()
+
+        load_database()
+        #app.debug = True #DEBUG
+        app.debug = False #DEBUG
+        app.debug = DEBUG
+        app.before_first_request(init_db)
+
         app.run(port=SERVER_PORT, host='0.0.0.0')
 
 
@@ -1667,59 +1729,3 @@ if __name__ == '__main__':
 
 else:
     application = app
-
-
-
-
-#    init_classes()
-#
-#def init_classes():
-#    """
-#    reads the data from the disk, parses and loads it to global variables.
-#    has to be changed if using WSGI servers aroung it (eg. apache) once global variables
-#    are not shared.
-#    """
-
-    #global data
-    #
-    #if data is None:
-    #    with app.app_context():
-    #        print "initializing db"
-    #
-    #        #data = status.DataManager( db_path=dbPath, ext=pycklerext )
-    #
-    #        print "db loaded"
-    #
-    #else:
-    #    with app.app_context():
-    #        print "updating db"
-    #        data.loadlast()
-    #        print "db updated"
-    #pass
-#
-#@app.route("/stats", methods=['GET'])
-#def get_stats():
-#    resp = Response(
-#        response=res,
-#        status=200,
-#        mimetype='text/html'
-#    )
-#
-#@app.route("/raw", methods=['GET'])
-#def get_raw():
-#    resp = Response(
-#        response=jsonpickle.encode( data.get_dict() ),
-#        status=200,
-#        mimetype='application/json'
-#    )
-#    return resp
-
-# ===== API TO GETTERS =====
-#@app.route("/get/<module>", methods=['GET'])
-#def get_module(module):
-#    if module in g.modules:
-#        return g.modules[ module ]( data, request )
-#    else:
-#        return abort( 404 )
-#def get_mem_all( data, request ):
-#    return jsonify( mem_data )

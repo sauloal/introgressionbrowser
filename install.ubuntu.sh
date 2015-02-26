@@ -1,13 +1,8 @@
-apt-get install -y python-setuptools build-essential libfreetype6 libfreetype6-dev zlib1g-dev libjpeg62 libjpeg62-dev python-pip python-dev python-numpy python-scipy python-matplotlib python-imaging pkg-config libblas-dev liblapack-dev gfortran apache2
+apt-get install -y build-essential checkinstall libmagickwand-dev openssl sqlite3 libsqlite3-dev libfreetype6{,-dev} zlib1g-dev libjpeg62{,-dev} pkg-config libblas-dev liblapack-dev gfortran
+apt-get install -y python-setuptools python-dev python-numpy python-scipy python-matplotlib python-pandas python-sympy python-pip python-imaging
 
 a2enmod wsgi
 
-easy_install --user flask
-easy_install --user ete2
-easy_install --user PIL
-easy_install --user Image
-easy_install --user sqlalchemy
-easy_install --user pysha3
-easy_install --user rsa
+pip install --requirement requirements.txt
 
 ln -s ibrowser.conf /etc/apache2/mods-available/ibrowser.conf

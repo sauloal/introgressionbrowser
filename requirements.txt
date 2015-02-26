@@ -4,11 +4,13 @@ sqlalchemy
 pysha3
 rsa
 
-##if not in the system
+##preferably install system wide
+#apt-get install -y python-setuptools python-dev python-numpy python-scipy python-matplotlib python-pandas python-sympy python-pip python-imaging
+#
+##if not, uncomment the following lines
 #Pillow
 #Image
 #numpy
 #scipy
 #matplotlib
 #MySQL-python
-

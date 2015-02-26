@@ -27,3 +27,6 @@ checkout
 .sync/
 excluder
 rsync
+config.keylen
+config.secret
+

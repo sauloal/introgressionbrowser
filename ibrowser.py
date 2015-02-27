@@ -5,32 +5,8 @@ Reads config.py to setup.
 Uses vcf_walk as shared library and either vcf_walk_ram or vcf_walk_sql as database.
 
 
-#add credentials
-#
-#default credentials. Admin is compulsory
-#login: admin pass: admin
-#
 #to add users in the command line run:
 #ibrowser adduser <USERNAME> <PASSWORD>
-#
-#to create default users in the command line, run:
-#ibrowser genuser <USERNAME> <PASSWORD>
-# then, copy the information in credentials
-# eg: ./ibrowser.py genuser admin admin
-#     username admin pass 5fa21eab20861e9f01f0f577bee378cf31b5b933090df492dbf0b05870096459cd2cb270ce0ca25ddb2ebfed7828a7b1 salt 6086e5c03e6e7cdb0899419b5653b485903d50d5cf14cd346e2036c510884df028c257eecc543908c35d83e6c6858c3f
-#password and salt will change with each run
-credentials = {
-    #USERNAME  PASSWORD                                                                                                                            SALT
-    'admin': ( '23a08ce2515be0762c225dbe736fa585a25c49b25183c957eb3d08403818faa5413cebd3cfafc30fb59898b675c6243cb8499cc312cfb6b4699c1695168c8cbf', 'b245309a4d7958de36ecf384b6bed5b37781172c84c54ac5cf31f169131679cad082483baf06333a2dcceaf0400b47988e05e03e2c0431c7df2e7a1c6ad46b8f' )
-}
-
-
-#to add users in the command line run:
-#ibrowser adduser <USERNAME> <PASSWORD>
-#to create default users in the command line, run:
-#ibrowser genuser <USERNAME> <PASSWORD>
-# then, copy the information in credentials
-
 
 
 NFO FILE:
@@ -55,7 +31,8 @@ import sys
 import io
 import base64
 import glob
-import rsa
+
+
 
 from operator import itemgetter
 
@@ -133,21 +110,6 @@ if not os.path.isdir( INFOLDER ):
 
 
 
-if not os.path.exists( secret_file ):
-    print "secret file %s does not exists. CREATING" % secret_file
-    secret = os.urandom(24)
-    open(secret_file, 'wb').write(secret)
-
-if not os.path.exists( keylen_file ):
-    print "keylen file %s does not exists. CREATING with default %d" % ( keylen_file, 2048 )
-    open(keylen_file, 'w').write(str(2048))
-
-SECRET_KEY                =     open(secret_file     , 'rb').read().strip()
-RSA_KEY_SIZE              = int(open(keylen_file     , 'r' ).read())
-
-print "SECRET KEY  ", repr(SECRET_KEY)
-print "RSA_KEY_SIZE", RSA_KEY_SIZE
-
 
 
 
@@ -170,9 +132,18 @@ librepoints = [
     'getsalt',
 ]
 
-loaded    = False
 
 
+
+if not os.path.exists( secret_file ):
+    print "secret file %s does not exists. CREATING" % secret_file
+    secret = os.urandom(24)
+    open(secret_file, 'wb').write(secret)
+
+
+SECRET_KEY                =     open(secret_file     , 'rb').read().strip()
+
+print "SECRET KEY  ", repr(SECRET_KEY)
 
 
 
@@ -185,31 +156,95 @@ app.config['MAX_CONTENT_LENGTH']            = MAX_CONTENT_LENGTH
 #jsonpickle.set_encoder_options('simplejson', ensure_ascii=True, sort_keys=True, indent=1)
 
 
+
+
+
+
+
+
+
+
+def encrypter(message):
+    return message
+
+def decrypter(message):
+    return message
+
 if hasLogin:
+    #import rsa
+
+    from Crypto.PublicKey import RSA
+    from Crypto.Cipher    import PKCS1_v1_5
+
+    print "LOGIN ENABLED"
+
+    if not os.path.exists( keylen_file ):
+        print "keylen file %s does not exists. CREATING with default %d" % ( keylen_file, 2048 )
+        open(keylen_file, 'w').write(str(2048))
+
+    RSA_KEY_SIZE              = int(open(keylen_file     , 'r' ).read())
+    print "RSA_KEY_SIZE", RSA_KEY_SIZE
+
     rsa_private_key_file_name = os.path.join( "templates", 'rsa_%d_priv.pem' % RSA_KEY_SIZE )
     rsa_public_key_file_name  = os.path.join( "templates", 'rsa_%d_pub.pem'  % RSA_KEY_SIZE )
 
-    if ( not os.path.exists( rsa_private_key_file_name ) ):
-        print "RSA private key %s does not exists. please create it by entering the 'templates' folder and running gen_key.sh" % rsa_private_key_file_name
-        sys.exit(1)
+    if ( not os.path.exists( rsa_private_key_file_name ) ) or ( not os.path.exists( rsa_public_key_file_name ) ):
+        if ( os.path.exists( rsa_private_key_file_name ) ):
+            os.remove(rsa_private_key_file_name)
 
-    if ( not os.path.exists( rsa_public_key_file_name ) ):
-        print "RSA public key %s does not exists. please create it by entering the 'templates' folder and running gen_key.sh" % rsa_public_key_file_name
-        sys.exit(1)
+        if ( os.path.exists( rsa_public_key_file_name ) ):
+            os.remove(rsa_public_key_file_name)
 
-    rsa_private_key_data = open(rsa_private_key_file_name, 'r').read()
-    rsa_public_key_data  = open(rsa_public_key_file_name , 'r').read()
+        print "PUBLIC KEY %s OR PRIVATE KEY %s DOES NOT EXISTS. CREATING" % (rsa_private_key_file_name, rsa_public_key_file_name)
+        #(pubkey, privkey) = rsa.newkeys(RSA_KEY_SIZE, accurate=True, poolsize=1)
+        #open(rsa_public_key_file_name , 'w').write( pubkey.save_pkcs1()  )
+        #open(rsa_private_key_file_name, 'w').write( privkey.save_pkcs1() )
 
-    rsa_private_key      = rsa.PrivateKey.load_pkcs1(            rsa_private_key_data )
-    rsa_public_key       = rsa.PublicKey.load_pkcs1_openssl_pem( rsa_public_key_data  )
 
+        privkey = RSA.generate(RSA_KEY_SIZE)
+        pubkey  = privkey.publickey()
+
+        open(rsa_public_key_file_name , 'w').write( pubkey.exportKey('PEM')  )
+        open(rsa_private_key_file_name, 'w').write( privkey.exportKey('PEM') )
+
+        print "saved public and private keys"
+
+
+    rsa_private_key      = RSA.importKey(open(rsa_private_key_file_name, 'r').read())
+    rsa_public_key       = RSA.importKey(open(rsa_public_key_file_name , 'r').read())
+
+    enc_cipher           = PKCS1_v1_5.new(rsa_public_key )
+    dec_cipher           = PKCS1_v1_5.new(rsa_private_key)
 
     def encrypter(message):
-        return base64.b64encode( rsa.encrypt(message, rsa_public_key ) )
+        ciphertext = enc_cipher.encrypt(message)
+        return base64.b64encode( ciphertext )
 
     def decrypter(message):
-        return rsa.decrypt(base64.b64decode( message ), rsa_private_key)
+        sentinel   = None
+        ciphertext = base64.b64decode( message )
+        dec        = dec_cipher.decrypt(ciphertext, sentinel)
+        if dec is None:
+            print "error decrypting message"
+            sys.exit(1)
+        return dec
 
+    #rsa_private_key      = rsa.PrivateKey.load_pkcs1( open(rsa_private_key_file_name, 'r').read() )
+    #try:
+    #    rsa_public_key       = rsa.PublicKey.load_pkcs1(  open(rsa_public_key_file_name , 'r').read() )
+    #except:
+    #    try:
+    #        rsa_public_key       = rsa.PublicKey.load_pkcs1_openssl_pem( open(rsa_public_key_file_name , 'r').read() )
+    #    except:
+    #        raise
+
+    #def encrypter(message):
+    #    return base64.b64encode( rsa.encrypt(message, rsa_public_key ) )
+    #
+    #def decrypter(message):
+    #    return rsa.decrypt(base64.b64decode( message ), rsa_private_key)
+
+    print "encryption test"
     message     = "test"
     encmess     = encrypter(message)
     decmess     = decrypter(encmess)
@@ -217,6 +252,12 @@ if hasLogin:
     print "message ", message
     print "encmess ", encmess
     print "decmess ", decmess
+
+    assert message == decmess, "decrypted message %s does not match original message %s" % (decmess, message)
+
+
+
+
 
 
 
@@ -228,7 +269,9 @@ def include_file(name):
     return Markup(app.jinja_loader.get_source(app.jinja_env, name)[0])
 
 def include_file_multiline(name):
-    lines     = app.jinja_loader.get_source(app.jinja_env, name)[0].split("\n")
+    lines     = app.jinja_loader.get_source(app.jinja_env, name)[0]
+    lines.replace("RSA PUBLIC KEY", "PUBLIC KEY")
+    lines     = lines.split("\n")
     lines     = [ "'" + l + "\\n' +" for l in lines ]
     lines[-1] = lines[-1].strip(" +")
     return Markup("\n".join( lines ))
@@ -239,7 +282,7 @@ app.jinja_env.globals['encbitsize'            ] = str( RSA_KEY_SIZE )
 
 
 
-
+USER_DATABASE_FILE = os.path.join( INFOLDER, 'users.sqlite' )
 print "importing user db"
 user_db              = os.path.join( dir_path, 'user_db.py' )
 execfile(user_db)
@@ -1495,11 +1538,9 @@ def init_db():
 
     else:
         with app.app_context():
-            global loaded
             global DATABASEINV
 
             print "loading db"
-            #g.loaded        = False
             interface.DEBUG = IDEBUG
 
             DATABASEINV = {}
@@ -1529,7 +1570,6 @@ def init_db():
                 db.append( dbMtime )
                 db.append( man     )
 
-                #g.loaded        = True
                 print DATABASEINV
                 print "db loaded"
 
@@ -1637,7 +1677,7 @@ def add_default_users():
         pwd    = generate_password_hash("admin" + "admin" + noonce)
 
         try:
-            add_user(username, pwd, noonce)
+            add_user("admin", pwd, noonce)
 
         except:
             print "failed to add default user ADMIN. cannont continue"
@@ -1659,7 +1699,7 @@ def main():
             print "no login, no add/gen user"
             sys.exit(1)
 
-        actions = ("adduser", "deluser", "listusers", "init")
+        actions = ("adduser", "deluser", "listusers", "init", "clean")
 
         try:
             action   = sys.argv[1]
@@ -1681,7 +1721,18 @@ def main():
 
 
         if   action == "init":
-            pass
+            print "inited"
+
+        if action == "clean":
+            print "cleaning"
+            for filename in [ secret_file, keylen_file, rsa_private_key_file_name, rsa_public_key_file_name, USER_DATABASE_FILE ]:
+                print " deleting %s" % filename,
+                if os.path.exists( filename ):
+                    os.remove( filename )
+                    print "... delete ...",
+                else:
+                    print "... skip ...",
+                print "DONE"
 
         elif action == "adduser":
             noonce = gen_noonce()

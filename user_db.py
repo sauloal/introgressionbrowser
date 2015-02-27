@@ -10,7 +10,7 @@ from datetime import datetime
 
 #from wtforms              import form, fields, validators
 
-app.config['DATABASE_FILE'          ] = os.path.join( dir_path, 'users.sqlite' )
+app.config['DATABASE_FILE'          ] = USER_DATABASE_FILE
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + app.config['DATABASE_FILE']
 app.config['SQLALCHEMY_ECHO'        ] = False
 

@@ -1,14 +1,13 @@
 #decide whether to have user control or not
-hasLogin    = True
+HAS_LOGIN    = False
 
 #define port to server webpage
 SERVER_PORT               = 10000
 
 # pages which can be seen without login
-librepaths = [
+LIBRE_PATHS = [
     '/api',
     '/favicon.ico'
 ]
-
 
 DEBUG                     = True

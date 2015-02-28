@@ -83,7 +83,9 @@ class encryption(object):
         self.RSA_KEY_SIZE              = int(open(self.keylen_file     , 'r' ).read())
         print "RSA_KEY_SIZE", self.RSA_KEY_SIZE
 
-        self.rsa_private_key_file_name = os.path.join( "templates", 'rsa_%d_priv.pem' % self.RSA_KEY_SIZE )
+
+        self.rsa_private_key_file_name = 'rsa_%d_priv.pem' % self.RSA_KEY_SIZE
+        #self.rsa_private_key_file_name = os.path.join( "templates", 'rsa_%d_priv.pem' % self.RSA_KEY_SIZE )
         self.rsa_public_key_file_name  = os.path.join( "templates", 'rsa_%d_pub.pem'  % self.RSA_KEY_SIZE )
 
         if ( not os.path.exists( self.rsa_private_key_file_name ) ) or ( not os.path.exists( self.rsa_public_key_file_name ) ):
@@ -156,35 +158,51 @@ class encryption(object):
 
 
 
-
-##VARIABLES
-#DEBUG                     = True
-#MAX_NUMBER_OF_COLUMNS     = 300
-#SERVER_PORT               = 10000
-#MAX_CONTENT_LENGTH        = 128 * 1024 * 1024
-#USE_SQL                   = True
-#INFOLDER                  = None
-#
-#
-#hasLogin                  = False
-#SECRET_KEY                = None
-#USER_DATABASE_FILE        = None
-#SECRET_FILE               = None
-#ENCRYPTION_INST           = None
-
-
 def load_config( args ):
     if len(args) == 0:
         print "no config file or command given"
         sys.exit(1)
 
+    variables = {
+        'HAS_LOGIN'                 : False,
+        'SERVER_PORT'               : 10000,
 
-    global SERVER_PORT
-    global USE_SQL
-    global SECRET_FILE
-    global SECRET_KEY
-    global ENCRYPTION_INST
-    global USER_DATABASE_FILE
+        'DEBUG'                     : True,
+
+        'MAX_CONTENT_LENGTH'        : MAX_CONTENT_LENGTH,
+        'LIBRE_POINTS'              : librepoints,
+        'LIBRE_PATHS'               : [
+            '/api',
+            '/favicon.ico'
+        ],
+
+        'IDEBUG'                    : IDEBUG,
+        'getManager'                : getManager,
+        'INTERFACE'                 : interface
+    }
+
+
+    ##VARIABLES
+    #hasLogin                  = False
+    #SERVER_PORT               = 10000
+    #librepaths = [
+    #    '/api',
+    #    '/favicon.ico'
+    #]
+    #DEBUG                     = True
+    #USE_SSL                   = False
+    #
+    #MAX_NUMBER_OF_COLUMNS     = 300
+    #MAX_CONTENT_LENGTH        = 128 * 1024 * 1024
+    #USE_SQL                   = True
+    #INFOLDER                  = None
+    #
+    #
+    #SECRET_KEY                = None
+    #USER_DATABASE_FILE        = None
+    #SECRET_FILE               = None
+    #ENCRYPTION_INST           = None
+
 
     INFOLDER = os.path.abspath( args[0] )
     if not os.path.exists( INFOLDER ):
@@ -194,23 +212,11 @@ def load_config( args ):
     if not os.path.isdir( INFOLDER ):
         print "data folder %s is not a folder" % INFOLDER
         sys.exit(1)
+    variables['INFOLDER']       = INFOLDER
 
-    config_file      = os.path.join( INFOLDER, 'config.py'     )
-
-    if not os.path.exists( config_file ):
-        print "config file %s does not exists" % config_file
-        sys.exit( 1 )
-
-
-    print "loading config", config_file
-    lcls = {}
-    execfile(config_file, globals(), lcls)
-    for lcl in lcls:
-        globals()[lcl] = lcls[lcl]
 
 
     SECRET_FILE        = os.path.join( INFOLDER, "config.secret" )
-
     if not os.path.exists( SECRET_FILE ):
         print "secret file %s does not exists. CREATING" % SECRET_FILE
         secret = os.urandom(24)
@@ -218,24 +224,40 @@ def load_config( args ):
 
     SECRET_KEY                =     open(SECRET_FILE     , 'rb').read().strip()
     print "SECRET KEY  ", repr(SECRET_KEY)
+    variables['SECRET_KEY'] = SECRET_KEY
+
+
+
+    config_file      = os.path.join( INFOLDER, 'config.py'     )
+    if not os.path.exists( config_file ):
+        print "config file %s does not exists" % config_file
+        sys.exit( 1 )
+
+    print "loading config", config_file
+    lcl = {}
+    execfile(config_file, lcl, lcl)
+    #print "lcl", lcl, "\n"
+    for k in lcl:
+        if k in variables:
+            print "updating key %s from %s to %s" % (k, str(variables[k]), str(lcl[k]))
+            variables[k] = lcl[k]
+
+
 
     app.before_first_request(init_db)
 
-    app.secret_key                   = SECRET_KEY
-    app.debug                        = DEBUG
-    app.config["getManager"        ] = getManager
-    app.config['HAS_LOGIN'         ] = hasLogin
-    app.config['LIBRE_PATHS'       ] = librepaths
-    app.config['LIBRE_POINTS'      ] = librepoints
-    app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
-    app.config["INFOLDER"          ] = INFOLDER
-    app.config["IDEBUG"            ] = IDEBUG
-    app.config["INTERFACE"         ] = interface
-    app.config["SERVER_PORT"       ] = SERVER_PORT
+    app.secret_key                   = variables['SECRET_KEY']
+    app.debug                        = variables['DEBUG'     ]
+
+    for k in variables:
+        app.config[k] = variables[k]
+
+    #print "config", app.config, "\n"
+
 
     interface.DEBUG = IDEBUG
 
-    if hasLogin:
+    if variables['HAS_LOGIN']:
         print "LOGIN ENABLED"
         print "INITIALIZING DB"
         USER_DATABASE_FILE = os.path.join( INFOLDER, 'users.sqlite' )

@@ -3,6 +3,6 @@ apt-get install -y python-setuptools python-dev python-numpy python-scipy python
 
 a2enmod wsgi
 
-pip install --requirement requirements.txt
+pip install --user --requirement requirements.txt
 
 ln -s ibrowser.conf /etc/apache2/mods-available/ibrowser.conf

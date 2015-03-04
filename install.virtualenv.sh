@@ -10,7 +10,7 @@ a2enmod wsgi
 virtualenv venv && source ./venv/bin/activate
 
 #(takes a while)
-pip install --requirement requirements.txt
+pip install --user --requirement requirements.txt
 
 cd data && scp -c arcfour assembly@assembly:/home/assembly/tomato150/programs/iBrowser/iBrowser.data.tar.gz . && tar xvzf iBrowser.data.tar.gz && rm iBrowser.data.tar.gz && cd - python ibrowser.py
 

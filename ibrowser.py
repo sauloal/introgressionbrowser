@@ -38,7 +38,9 @@ def init( args ):
 def start():
     if app.config['HAS_LOGIN']:
         print "SSL ENABLED: access by https://127.0.0.1:%d" % app.config["SERVER_PORT"       ]
+
         app.run(port=app.config["SERVER_PORT"       ], host='0.0.0.0', ssl_context=(app.config["SSL_CERT"], app.config["SSL_KEY"]))
+        #app.run(port=app.config["SERVER_PORT"       ], host='0.0.0.0', ssl_context=app.config["SSL_CONTEXT"])
     else:
         print "SSL DISABLED: access by http://127.0.0.1:%d" % app.config["SERVER_PORT"       ]
         app.run(port=app.config["SERVER_PORT"       ], host='0.0.0.0')

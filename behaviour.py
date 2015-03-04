@@ -4,6 +4,7 @@ import io
 import base64
 import subprocess
 
+import ssl
 from Crypto.PublicKey import RSA
 from Crypto.Cipher    import PKCS1_v1_5
 
@@ -18,8 +19,8 @@ MAX_CONTENT_LENGTH        = 128*1024*1024
 SSL_KEY_LENGTH            = 2048
 
 
-
 print "IMPORTING FUNCTIONS"
+sys.path.insert(0, os.path.dirname(os.path.abspath( __file__ )))
 from routes import *
 
 
@@ -322,6 +323,18 @@ def load_config( args ):
         ssl_cert, ssl_key = create_self_signed_cert(cert_dir=dir_path, cert_name="server")
         app.config["SSL_CERT"      ] = ssl_cert
         app.config["SSL_KEY"       ] = ssl_key
+
+        #ctx = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+        #ctx = ssl.create_default_context( ssl.SSLContext(ssl.PROTOCOL_TLSv1_2))
+        #ctx = ssl.create_default_context( purpose=Purpose.SERVER_AUTH )
+        #ctx.load_cert_chain(ssl_cert, ssl_key)
+
+        #context = ssl.create_default_context( ssl.SSLContext(ssl.PROTOCOL_TLSv1_2) )
+        #context.load_cert_chain('yourserver.crt', 'yourserver.key')
+
+
+        #app.config["SSL_CONTEXT"   ] = ctx
+
 
 
 

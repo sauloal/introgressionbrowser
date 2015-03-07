@@ -13,9 +13,11 @@ echo "AWAKEN" >> $LOG
 
 date >> $LOG
 echo "NID $NID HPATH $HPATH XPATH $XPATH MPATH $MPATH" >> $LOG
+echo "UMOUNTING" >> $LOG
 sudo umount $MPATH >> $LOG
 
 set -xeu
+echo "MOUNTING" >> $LOG
 sudo mount -t vboxsf $SNAME $MPATH >> $LOG
 #sudo mount -t vboxsf -o uid=$NID,gid=$NID $SNAME $MPATH >> $LOG
 

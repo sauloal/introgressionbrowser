@@ -1,0 +1,20 @@
+language: python
+python:
+  - "2.6"
+  - "2.7"
+# command to install dependencies
+install:
+  - pip install -r requirements.txt
+  - mkdir data
+  - cp config.template data/config.py
+# command to run tests
+script:
+  - ibrowser.py data/ init
+  - sed -i 's/HAS_LOGIN    = False/HAS_LOGIN    = True/' data/config2.py
+  - ibrowser.py data/ adduser test1
+  - ibrowser.py data/ adduser test2
+  - ibrowser.py data/ listusers
+  - ibrowser.py data/ deluser test1
+  - ibrowser.py data/ deluser test2
+  - ibrowser.py data/ clean
+  - ibrowser.py data/

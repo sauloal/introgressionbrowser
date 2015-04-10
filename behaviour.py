@@ -244,7 +244,8 @@ def load_config( args ):
 
     SECRET_KEY                =     open(SECRET_FILE     , 'rb').read().strip()
     print "SECRET KEY  ", repr(SECRET_KEY)
-    variables['SECRET_KEY'] = SECRET_KEY
+    variables['SECRET_FILE'] = SECRET_FILE
+    variables['SECRET_KEY' ] = SECRET_KEY
 
 
 
@@ -281,7 +282,7 @@ def load_config( args ):
         print "LOGIN ENABLED"
         print "INITIALIZING DB"
         USER_DATABASE_FILE = os.path.join( INFOLDER, 'users.sqlite' )
-
+        variables['USER_DATABASE_FILE'] = USER_DATABASE_FILE
 
         app.config['DATABASE_FILE'          ] = USER_DATABASE_FILE
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + app.config['DATABASE_FILE']
@@ -370,7 +371,7 @@ def run_action(args):
 
     if action == "clean":
         print "cleaning"
-        files_to_del = [ app.config["SECRET_FILE"], app.config["USER_DATABASE_FILE"] ]
+        files_to_del = [ app.config["SECRET_FILE"], app.config["DATABASE_FILE"] ]
 
         if app.config['HAS_LOGIN']:
             if app.config["ENCRYPTION_INST"] is not None:

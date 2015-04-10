@@ -360,7 +360,7 @@ def run_action(args):
 
 
 
-    if ( action not in ("init") ) and ( not hasLogin ):
+    if ( action not in ("init") ) and ( not app.config['HAS_LOGIN'] ):
         print "no login, no add/gen user"
         sys.exit(1)
 
@@ -372,7 +372,7 @@ def run_action(args):
         print "cleaning"
         files_to_del = [ SECRET_FILE, USER_DATABASE_FILE ]
 
-        if hasLogin:
+        if app.config['HAS_LOGIN']:
             if ENCRYPTION_INST is not None:
                 files_to_del.extend( [ ENCRYPTION_INST.keylen_file, ENCRYPTION_INST.rsa_private_key_file_name, ENCRYPTION_INST.rsa_public_key_file_name ] )
 

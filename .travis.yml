@@ -6,7 +6,6 @@ before_script:
   - sudo bash install.ubuntu.sh
 # command to install python dependencies
 install:
-  - pip install -r requirements.txt
   - mkdir data
   - cp config.template data/config.py
 # command to run tests

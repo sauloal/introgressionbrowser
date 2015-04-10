@@ -1,17 +1,21 @@
 language: python
 python:
   - "2.7"
+# use pre-compiled system wide packages
+# http://danielnouri.org/notes/2012/11/23/use-apt-get-to-install-python-dependencies-for-travis-ci/
+virtualenv:
+  system_site_packages: true
 # command to install system dependencies
 before_script:
   - sudo mkdir -p /etc/apache2/mods-available/
   - sudo bash install.ubuntu.sh
-  - pip install --upgrade --requirement requirements.txt
-  - pip install --upgrade Pillow
-  - pip install --upgrade Image
-  - pip install --upgrade numpy
-  - pip install --upgrade scipy
-  - pip install --upgrade matplotlib
-  - pip install --upgrade MySQL-python
+#  - pip install --upgrade --requirement requirements.txt
+#  - pip install --upgrade Pillow
+#  - pip install --upgrade Image
+#  - pip install --upgrade numpy
+#  - pip install --upgrade scipy
+#  - pip install --upgrade matplotlib
+#  - pip install --upgrade MySQL-python
 # command to install python dependencies
 install:
   - mkdir data

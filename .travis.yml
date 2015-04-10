@@ -6,6 +6,12 @@ before_script:
   - sudo mkdir -p /etc/apache2/mods-available/
   - sudo bash install.ubuntu.sh
   - pip install --upgrade --requirement requirements.txt
+  - pip install --upgrade Pillow
+  - pip install --upgrade Image
+  - pip install --upgrade numpy
+  - pip install --upgrade scipy
+  - pip install --upgrade matplotlib
+  - pip install --upgrade MySQL-python
 # command to install python dependencies
 install:
   - mkdir data
@@ -13,8 +19,8 @@ install:
 # command to run tests
 script:
   - python ibrowser.py data/ init
-  - sed -i 's/HAS_LOGIN    = False/HAS_LOGIN    = True/' data/config2.py
-  - cat data/config2.py
+  - sed -i 's/HAS_LOGIN    = False/HAS_LOGIN    = True/' data/config.py
+  - cat data/config.py
   - python ibrowser.py data/ adduser test1
   - python ibrowser.py data/ adduser test2
   - python ibrowser.py data/ listusers

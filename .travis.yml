@@ -1,7 +1,10 @@
 language: python
 python:
   - "2.7"
-# command to install dependencies
+# command to install system dependencies
+before_script:
+  - sudo bash install.ubuntu.sh
+# command to install python dependencies
 install:
   - pip install -r requirements.txt
   - mkdir data

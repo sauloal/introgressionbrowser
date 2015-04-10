@@ -9,12 +9,13 @@ install:
   - cp config.template data/config.py
 # command to run tests
 script:
-  - ibrowser.py data/ init
+  - python ibrowser.py data/ init
   - sed -i 's/HAS_LOGIN    = False/HAS_LOGIN    = True/' data/config2.py
-  - ibrowser.py data/ adduser test1
-  - ibrowser.py data/ adduser test2
-  - ibrowser.py data/ listusers
-  - ibrowser.py data/ deluser test1
-  - ibrowser.py data/ deluser test2
-  - ibrowser.py data/ clean
-  - ibrowser.py data/
+  - cat data/config2.py
+  - python ibrowser.py data/ adduser test1
+  - python ibrowser.py data/ adduser test2
+  - python ibrowser.py data/ listusers
+  - python ibrowser.py data/ deluser test1
+  - python ibrowser.py data/ deluser test2
+  - python ibrowser.py data/ clean
+  - python ibrowser.py data/

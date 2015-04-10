@@ -9,7 +9,7 @@ virtualenv:
 before_script:
   - sudo mkdir -p /etc/apache2/mods-available/
   - sudo bash install.ubuntu.sh
-#  - pip install --upgrade --requirement requirements.txt
+  - pip install --upgrade --requirement requirements.txt
 #  - pip install --upgrade Pillow
 #  - pip install --upgrade Image
 #  - pip install --upgrade numpy

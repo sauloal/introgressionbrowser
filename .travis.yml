@@ -5,6 +5,7 @@ python:
 before_script:
   - sudo mkdir -p /etc/apache2/mods-available/
   - sudo bash install.ubuntu.sh
+  - pip install --upgrade --requirement requirements.txt
 # command to install python dependencies
 install:
   - mkdir data

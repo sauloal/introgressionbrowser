@@ -5,6 +5,8 @@ Cluster Bioinformatics
 Plant Research International - PRI
 Wageningen University and Research Centre - WageningenUR
 
+![Travis Continuous Integration Build Status](https://travis-ci.org/sauloal/introgressionbrowser.svg?branch=master "Travis Continuous Integration Build Status")
+
 1. Introduction
 2. Methodology
 3. Installation

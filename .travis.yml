@@ -3,7 +3,7 @@ python:
   - "2.7"
 # command to install system dependencies
 before_script:
-  = sudo mkdir -p /etc/apache2/mods-available/
+  - sudo mkdir -p /etc/apache2/mods-available/
   - sudo bash install.ubuntu.sh
 # command to install python dependencies
 install:

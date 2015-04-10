@@ -370,11 +370,11 @@ def run_action(args):
 
     if action == "clean":
         print "cleaning"
-        files_to_del = [ SECRET_FILE, USER_DATABASE_FILE ]
+        files_to_del = [ app.config["SECRET_FILE"], app.config["USER_DATABASE_FILE"] ]
 
         if app.config['HAS_LOGIN']:
-            if ENCRYPTION_INST is not None:
-                files_to_del.extend( [ ENCRYPTION_INST.keylen_file, ENCRYPTION_INST.rsa_private_key_file_name, ENCRYPTION_INST.rsa_public_key_file_name ] )
+            if app.config["ENCRYPTION_INST"] is not None:
+                files_to_del.extend( [ app.config["ENCRYPTION_INST"].keylen_file, app.config["ENCRYPTION_INST"].rsa_private_key_file_name, app.config["ENCRYPTION_INST"].rsa_public_key_file_name ] )
 
         for filename in files_to_del:
             if filename is None:

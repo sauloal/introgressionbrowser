@@ -31,4 +31,4 @@ script:
   - python ibrowser.py data/ deluser test1
   - python ibrowser.py data/ deluser test2
   - python ibrowser.py data/ clean
-  - python ibrowser.py data/
+  - python ibrowser.py data/ &\ && pid=$! && sleep 60s && kill -9 $pid && true

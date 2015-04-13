@@ -7,6 +7,9 @@ Wageningen University and Research Centre - WageningenUR
 
 ![Travis Continuous Integration Build Status](https://travis-ci.org/sauloal/introgressionbrowser.svg?branch=master "Travis Continuous Integration Build Status")
 
+Manual: http://sauloal.github.io/introgressionbrowser
+Wiki: https://github.com/sauloal/introgressionbrowser/wiki
+
 1. Introduction
 2. Methodology
 3. Installation

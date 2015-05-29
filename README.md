@@ -7,8 +7,8 @@ Wageningen University and Research Centre - WageningenUR
 
 ![Travis Continuous Integration Build Status](https://travis-ci.org/sauloal/introgressionbrowser.svg?branch=master "Travis Continuous Integration Build Status")
 
-Manual: http://sauloal.github.io/introgressionbrowser
-Wiki: https://github.com/sauloal/introgressionbrowser/wiki
+
+Manual and Wiki: https://github.com/sauloal/introgressionbrowser/wiki
 
 1. Introduction
 2. Methodology
@@ -244,6 +244,17 @@ The webserver scripts will read and serve the data to a web browser. There are t
 
 
 6. Acknowledgements
-Sander Peters
-Hans de Jong
-Gabino Perez
+The co-authors:
+	Dick de Ridder
+	Eric M. Schranz
+	Gabino Perez
+	Hans de Jong
+	Sander Peters
+	Paul Franz
+The beta testers:
+	Remco Stam
+	Ruud de Maagd
+	Yongfeng Zhou
+
+
+Manual: http://sauloal.github.io/introgressionbrowser

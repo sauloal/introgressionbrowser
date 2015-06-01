@@ -1,3 +1,4 @@
 *.pickle.gz
 *.svg
 *.pyc
+pypy-2.3.1-linux64

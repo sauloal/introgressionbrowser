@@ -10,62 +10,62 @@ timestamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
 
 
 #/home/assembly/tomato150/programs/vcfmerger_ui/data/src/ara/indata
-#./vcfmerger/aux/gen_makefile.py --input arabidopsis.csv         --infasta TAIR10.fasta                                     --size 50000 --project arabidopsis_50k              --no-pickle --cluster-no-svg --smart_threads 25 --cluster-threads 5 --excluded-chrom chloroplast --excluded-chrom mitochondria --cluster-no-cols
+#./vcfmerger/gen_makefile.py --input arabidopsis.csv         --infasta TAIR10.fasta                                     --size 50000 --project arabidopsis_50k              --no-pickle --cluster-no-svg --smart_threads 25 --cluster-threads 5 --excluded-chrom chloroplast --excluded-chrom mitochondria --cluster-no-cols
 #make -f makefile_arabidopsis_50k
 #
-#./vcfmerger/aux/gen_makefile.py --input arabidopsis_xianwen.csv --filter-gff TAIR10.fasta_50000.gff.Chr4.gff.inversion.gff              --project arabidopsis_xianwen_50k      --no-pickle --cluster-no-svg --smart_threads 25 --cluster-threads 5 --excluded-chrom chloroplast --excluded-chrom mitochondria --cluster-no-cols
+#./vcfmerger/gen_makefile.py --input arabidopsis_xianwen.csv --filter-gff TAIR10.fasta_50000.gff.Chr4.gff.inversion.gff              --project arabidopsis_xianwen_50k      --no-pickle --cluster-no-svg --smart_threads 25 --cluster-threads 5 --excluded-chrom chloroplast --excluded-chrom mitochondria --cluster-no-cols
 #make -f makefile_arabidopsis_xianwen_50k
 #
-#./vcfmerger/aux/gen_makefile.py --input arabidopsis_xianwen.csv --filter-gff TAIR10.fasta_50000.gff.Chr4.gff.inversion.gff              --project arabidopsis_xianwen_50k_sing --no-pickle --cluster-no-svg --smart_threads 25 --cluster-threads 5 --excluded-chrom chloroplast --excluded-chrom mitochondria --cluster-no-cols --simplify-include-singleton
+#./vcfmerger/gen_makefile.py --input arabidopsis_xianwen.csv --filter-gff TAIR10.fasta_50000.gff.Chr4.gff.inversion.gff              --project arabidopsis_xianwen_50k_sing --no-pickle --cluster-no-svg --smart_threads 25 --cluster-threads 5 --excluded-chrom chloroplast --excluded-chrom mitochondria --cluster-no-cols --simplify-include-singleton
 #make -f makefile_arabidopsis_xianwen_50k_sing
 #
-#./vcfmerger/aux/gen_makefile.py --input arabidopsis_xianwen.csv --filter-gff TAIR10.fasta_10000.gff.Chr4.gff.inversion.gff              --project arabidopsis_xianwen_10k      --no-pickle --cluster-no-svg --smart_threads 25 --cluster-threads 5 --excluded-chrom chloroplast --excluded-chrom mitochondria --cluster-no-cols
+#./vcfmerger/gen_makefile.py --input arabidopsis_xianwen.csv --filter-gff TAIR10.fasta_10000.gff.Chr4.gff.inversion.gff              --project arabidopsis_xianwen_10k      --no-pickle --cluster-no-svg --smart_threads 25 --cluster-threads 5 --excluded-chrom chloroplast --excluded-chrom mitochondria --cluster-no-cols
 #make -f makefile_arabidopsis_xianwen_10k
 #
-#./vcfmerger/aux/gen_makefile.py --input arabidopsis_xianwen.csv --filter-gff TAIR10.fasta_10000.gff.Chr4.gff.inversion.gff              --project arabidopsis_xianwen_10k_sing --no-pickle --cluster-no-svg --smart_threads 25 --cluster-threads 5 --excluded-chrom chloroplast --excluded-chrom mitochondria --cluster-no-cols --simplify-include-singleton
+#./vcfmerger/gen_makefile.py --input arabidopsis_xianwen.csv --filter-gff TAIR10.fasta_10000.gff.Chr4.gff.inversion.gff              --project arabidopsis_xianwen_10k_sing --no-pickle --cluster-no-svg --smart_threads 25 --cluster-threads 5 --excluded-chrom chloroplast --excluded-chrom mitochondria --cluster-no-cols --simplify-include-singleton
 #make -f makefile_arabidopsis_xianwen_10k_sing
 #
 #
 #
 #/home/assembly/tomato150/programs/vcfmerger_ui/data/src/tom85
-#./vcfmerger/aux/gen_makefile.py --input short2.lst --infasta S_lycopersicum_chromosomes.2.40.fa --size 10000               --project tom84_10k               --no-pickle --cluster-no-svg --smart_threads 25 --cluster-threads 5 --cluster-no-cols
+#./vcfmerger/gen_makefile.py --input short2.lst --infasta S_lycopersicum_chromosomes.2.40.fa --size 10000               --project tom84_10k               --no-pickle --cluster-no-svg --smart_threads 25 --cluster-threads 5 --cluster-no-cols
 #make -f makefile_tom84_10k
 #
-#./vcfmerger/aux/gen_makefile.py --input short2.lst --infasta S_lycopersicum_chromosomes.2.40.fa --size 50000               --project tom84_50k               --no-pickle --cluster-no-svg --smart_threads 25 --cluster-threads 5 --cluster-no-cols
+#./vcfmerger/gen_makefile.py --input short2.lst --infasta S_lycopersicum_chromosomes.2.40.fa --size 50000               --project tom84_50k               --no-pickle --cluster-no-svg --smart_threads 25 --cluster-threads 5 --cluster-no-cols
 #make -f makefile_tom84_50k
 #
-#./vcfmerger/aux/gen_makefile.py --input short2.lst --filter-gff ITAG2.3_gene_models.gff3.gene.gff3                         --project tom84_genes             --no-pickle --cluster-no-svg --smart_threads 25 --cluster-threads 5 --cluster-no-cols
+#./vcfmerger/gen_makefile.py --input short2.lst --filter-gff ITAG2.3_gene_models.gff3.gene.gff3                         --project tom84_genes             --no-pickle --cluster-no-svg --smart_threads 25 --cluster-threads 5 --cluster-no-cols
 #make -f makefile_tom84_genes
 #
-#./vcfmerger/aux/gen_makefile.py --input short2.lst --filter-gff S_lycopersicum_chromosomes.2.40.fa_10000_introgression.gff --project tom84_10k_introgression --no-pickle --cluster-no-svg --smart_threads 25 --cluster-threads 5 --cluster-no-cols
+#./vcfmerger/gen_makefile.py --input short2.lst --filter-gff S_lycopersicum_chromosomes.2.40.fa_10000_introgression.gff --project tom84_10k_introgression --no-pickle --cluster-no-svg --smart_threads 25 --cluster-threads 5 --cluster-no-cols
 #make -f makefile_tom84_10k_introgression
 #
-#./vcfmerger/aux/gen_makefile.py --input short2.lst --filter-gff S_lycopersicum_chromosomes.2.40.fa_50000_introgression.gff --project tom84_50k_introgression --no-pickle --cluster-no-svg --smart_threads 25 --cluster-threads 5 --cluster-no-cols
+#./vcfmerger/gen_makefile.py --input short2.lst --filter-gff S_lycopersicum_chromosomes.2.40.fa_50000_introgression.gff --project tom84_50k_introgression --no-pickle --cluster-no-svg --smart_threads 25 --cluster-threads 5 --cluster-no-cols
 #make -f makefile_tom84_50k_introgression
 #
 #
 #
 #/home/assembly/tomato150/programs/vcfmerger_ui/data/src/RIL
-#./vcfmerger/aux/gen_makefile.py --input RIL.lst --filter-gff S_lycopersicum_chromosomes.2.40.fa_50000.gff   --project RIL_50k                        --no-pickle --cluster-no-svg --smart_threads 25 --cluster-threads 5 --cluster-no-cols
+#./vcfmerger/gen_makefile.py --input RIL.lst --filter-gff S_lycopersicum_chromosomes.2.40.fa_50000.gff   --project RIL_50k                        --no-pickle --cluster-no-svg --smart_threads 25 --cluster-threads 5 --cluster-no-cols
 #make -f makefile_RIL_50k
 #
-#./vcfmerger/aux/gen_makefile.py --input RIL.lst --filter-gff S_lycopersicum_chromosomes.2.40.fa_50000.gff   --project RIL_50k_mode_ril               --no-pickle --cluster-no-svg --smart_threads 25 --cluster-threads 5 --concat-RIL --cluster-no-cols
+#./vcfmerger/gen_makefile.py --input RIL.lst --filter-gff S_lycopersicum_chromosomes.2.40.fa_50000.gff   --project RIL_50k_mode_ril               --no-pickle --cluster-no-svg --smart_threads 25 --cluster-threads 5 --concat-RIL --cluster-no-cols
 #make -f makefile_RIL_50k_mode_ril
 #
-#./vcfmerger/aux/gen_makefile.py --input RIL.lst --filter-gff S_lycopersicum_chromosomes.2.40.fa_50000.gff   --project RIL_50k_mode_ril_greedy        --no-pickle --cluster-no-svg --smart_threads 25 --cluster-threads 5 --concat-RIL --concat-RIL-greedy --cluster-no-cols
+#./vcfmerger/gen_makefile.py --input RIL.lst --filter-gff S_lycopersicum_chromosomes.2.40.fa_50000.gff   --project RIL_50k_mode_ril_greedy        --no-pickle --cluster-no-svg --smart_threads 25 --cluster-threads 5 --concat-RIL --concat-RIL-greedy --cluster-no-cols
 #make -f makefile_RIL_50k_mode_ril_greedy
 #
-#./vcfmerger/aux/gen_makefile.py --input RIL.lst --filter-gff S_lycopersicum_chromosomes.2.40.fa_50000.gff   --project RIL_50k_mode_ril_delete        --no-pickle --cluster-no-svg --smart_threads 25 --cluster-threads 5 --concat-RIL --concat-RIL-delete --cluster-no-cols
+#./vcfmerger/gen_makefile.py --input RIL.lst --filter-gff S_lycopersicum_chromosomes.2.40.fa_50000.gff   --project RIL_50k_mode_ril_delete        --no-pickle --cluster-no-svg --smart_threads 25 --cluster-threads 5 --concat-RIL --concat-RIL-delete --cluster-no-cols
 #make -f makefile_RIL_50k_mode_ril_delete
 #
-#./vcfmerger/aux/gen_makefile.py --input RIL.lst --filter-gff S_lycopersicum_chromosomes.2.40.fa_50000.gff   --project RIL_50k_mode_ril_delete_greedy --no-pickle --cluster-no-svg --smart_threads 25 --cluster-threads 5 --concat-RIL --concat-RIL-greedy --concat-RIL-delete --cluster-no-cols
+#./vcfmerger/gen_makefile.py --input RIL.lst --filter-gff S_lycopersicum_chromosomes.2.40.fa_50000.gff   --project RIL_50k_mode_ril_delete_greedy --no-pickle --cluster-no-svg --smart_threads 25 --cluster-threads 5 --concat-RIL --concat-RIL-greedy --concat-RIL-delete --cluster-no-cols
 #make -f makefile_RIL_50k_mode_ril_delete_greedy
 #
-#./vcfmerger/aux/gen_makefile.py --input RIL.lst --filter-gff S_lycopersicum_chromosomes.2.40.fa_10000.gff   --project RIL_10k                        --no-pickle --cluster-no-svg --smart_threads 25 --cluster-threads 5 --cluster-no-cols
+#./vcfmerger/gen_makefile.py --input RIL.lst --filter-gff S_lycopersicum_chromosomes.2.40.fa_10000.gff   --project RIL_10k                        --no-pickle --cluster-no-svg --smart_threads 25 --cluster-threads 5 --cluster-no-cols
 #make -f makefile_RIL_10k
 
 SCRIPT_DIR   = 'vcfmerger'
-AUX_DIR      = os.path.join(SCRIPT_DIR, 'aux')
+AUX_DIR      = os.path.join(SCRIPT_DIR)
 
 
 merger       = os.path.abspath( os.path.join( SCRIPT_DIR, 'vcfmerger.py'    ) )
@@ -76,8 +76,8 @@ walk_ram     = os.path.abspath( os.path.join( SCRIPT_DIR, 'vcf_walk_ram.py' ) )
 walk_sql     = os.path.abspath( os.path.join( SCRIPT_DIR, 'vcf_walk_sql.py' ) )
 cluster      = os.path.abspath( os.path.join( SCRIPT_DIR, 'cluster.py'      ) )
 topng        = os.path.abspath( os.path.join( SCRIPT_DIR, 'newick_to_png.py') )
-fasta_spacer = os.path.abspath( os.path.join( AUX_DIR   , 'fasta_spacer.py' ) )
-tree_maker   = os.path.abspath( os.path.join( AUX_DIR   , 'FastTreeMP'      ) )
+fasta_spacer = os.path.abspath( os.path.join( SCRIPT_DIR, 'fasta_spacer.py' ) )
+tree_maker   = os.path.abspath( os.path.join( SCRIPT_DIR, 'FastTreeMP'      ) )
 
 
 class makewriter(object):
@@ -372,7 +372,7 @@ def main(args):
 
 
     if infasta:
-        #vcfmerger/aux/fasta_spacer.py GENOME.fa 50000
+        #vcfmerger/fasta_spacer.py GENOME.fa 50000
         gff_cmd = "%s %s %s"  % (fasta_spacer, infasta, size)
         writer.write( infasta, filter_gff, gff_cmd, nick='gff' )
 

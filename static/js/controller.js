@@ -130,7 +130,7 @@ var mainController = function ( $scope, $http, mySharedService ) {
                             'end'        : 'End Position',
                             'num_unities': 'Number of components',
                             'num_snps'   : 'Number of SNPs',
-                            'name'       : 'Fragment Name',
+                            'name'       : 'Fragment Name'
         }
     };
 
@@ -221,13 +221,22 @@ var mainController = function ( $scope, $http, mySharedService ) {
 
         $http.get('api/report/'+$scope.databaseQry+'/'+$scope.chromosomeQry+'/'+$scope.geneQry)
             .success(
-                function(data) {
+                function(data, status, header, config) {
+                    console.log('report success %o status %o header %o config %o', data, status, header, config);
                     //console.log('report %o', data);
                     $scope.report  = data;
                     $scope.loadReport(data);
                     $scope.working = false;
                 }
-            );
+            )
+            .error(
+                function(data, status, header, config) {
+                    console.log('report error %o status %o header %o config %o', data, status, header, config);
+                    $scope.working = false;
+                    alert('error loading report');
+                }
+            )
+            ;
     };
 
     $scope.getData                 = function () {
@@ -531,7 +540,21 @@ var mainController = function ( $scope, $http, mySharedService ) {
                 $scope.chromosomeQry = $scope.chromosome;
                 $scope.geneQry       = gene;
                 $scope.showGeneQry();
+            } else {
+                console.log("not able to show gene");
+                alert("not able to show gene");
+
+                console.log('databases       ', $scope.databases   );
+                console.log('database        ', $scope.database    );
+                console.log('chromosomes     ', $scope.chromosomes );
+                console.log('chromosome      ', $scope.chromosome  );
+                console.log('genes           ', $scope.genes       );
+                console.log('gene            ', gene               );
+                console.log('valid database  ', isInList($scope.databases  , $scope.database   ) );
+                console.log('valid chromosome', isInList($scope.chromosomes, $scope.chromosome ) );
+                console.log('valid gene      ', isInList($scope.genes      , gene              ) );
             }
+
     };
 
     $scope.showHelp                = function () {

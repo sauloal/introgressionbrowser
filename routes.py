@@ -1,6 +1,7 @@
 import glob
 import sys
 import os
+import base64
 
 from operator import itemgetter
 

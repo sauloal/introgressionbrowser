@@ -1016,7 +1016,10 @@ class walker(object):
         if len( custom_orders_files ) > 0:
             for fn in custom_orders_files:
                 print "READING CUSTOM ORDER", fn
-                co_chrom, co_name, co_data = self.read_custom_order( fn, spps )
+                try:
+                    co_chrom, co_name, co_data = self.read_custom_order( fn, spps )
+                except:
+                    continue
 
                 if co_chrom is None:
                     continue
@@ -1054,11 +1057,13 @@ class walker(object):
 
         if not os.path.exists( fn ):
             print "input custom order file %s does not exists" % fn
-            sys.exit(1)
+            raise Exception('fileMissing', fn)
+            #sys.exit(1)
 
         if not os.path.isfile( fn ):
             print "input custom order file %s is not a file" % fn
-            sys.exit(1)
+            raise Exception('fileFolder', fn)
+            #sys.exit(1)
 
         #print spps
 

@@ -873,7 +873,7 @@ def get_mtime(db_name):
     if db_name not in app.config["DATABASEINV"]:
         abort(404)
 
-    return jsonify( { 'mtime': app.config["DATABASES"][ app.config["DATABASEINV"][db_name] ][ app.config["DATABASES_MTIME"] ] } )
+    return jsonify( { 'mtime': app.config["DATABASES"][ app.config["DATABASEINV"][db_name] ][ DATABASES_MTIME ] } )
 
 
 @app.route("/api/maxnumcol", methods=['GET'])

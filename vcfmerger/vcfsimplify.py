@@ -89,7 +89,7 @@ def main(args):
 
     data.addFile('1', invcf, 'merged')
 
-    with vcfmerger.openvcffile(outfile, 'w', compresslevel=1) as mfh:
+    with vcfmerger.openvcffile(outfile+'.tmp.vcf.gz', 'w', compresslevel=1) as mfh:
         mfh.write( data.getVcfHeader() )
 
         lines = []
@@ -108,7 +108,8 @@ def main(args):
         mfh.write( "".join( lines ) )
         lines = []
 
-
+    os.rename(outfile+'.tmp.vcf.gz', outfile)
+    
     print
     print data.getFilterStats()
 

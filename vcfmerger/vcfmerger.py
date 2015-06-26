@@ -149,6 +149,9 @@ class vcfResult(object):
     excludeSingleton = None
     noncarefiles     = None
     simpliStats      = None
+    prints           = 0
+    printsReal       = 0
+    print_every      = 100
 
     def __init__(self, simplify=SIMP_NO_SIMPLIFICATION, noncarefiles=[]):
         self.result       = None
@@ -157,6 +160,7 @@ class vcfResult(object):
         self.chrCount     = None
         self.posCount     = None
         self.simplify     = simplify
+
 
         if vcfResult.simpliStats is None:
             vcfResult.simpliStats = {
@@ -183,6 +187,18 @@ class vcfResult(object):
             print "simplifying :: Heterozygous [%3d, %3d] %s" % ( SIMP_EXCL_HETEROZYGOUS, math.log(SIMP_EXCL_HETEROZYGOUS , 2 ), str(vcfResult.excludHET       ) )
             print "simplifying :: Indel        [%3d, %3d] %s" % ( SIMP_EXCL_INDEL       , math.log(SIMP_EXCL_INDEL        , 2 ), str(vcfResult.excludeINDEL    ) )
             print "simplifying :: Singleton    [%3d, %3d] %s" % ( SIMP_EXCL_SINGLETON   , math.log(SIMP_EXCL_SINGLETON    , 2 ), str(vcfResult.excludeSingleton) )
+
+            print 'Progress Legend:'
+            print ' print every       :', vcfResult.print_every
+            print ' Heterozygous Dest : h'
+            print ' Heterozygous Indel: I'
+            print ' Homozygous Indel  : i'
+            print ' Source Indel      : s'
+            print ' Singleton 1       : 1'
+            print ' Singleton 2       : 2'
+            print ' Singleton 3       : 3'
+            print ' Ok                : .'
+
             #sys.exit(0)
 
         #TODO: IMPLEMENT
@@ -232,6 +248,39 @@ class vcfResult(object):
         return simpl
         #return srcs
 
+    def printprogress(self, msg, key=None, skip=0, linelen=100):
+        vcfResult.prints += 1
+
+        if skip != 0:
+            if key is None:
+                if vcfResult.prints % skip == 0:
+                    sys.stderr.write(msg)
+                    vcfResult.printsReal += 1
+
+                    if vcfResult.printsReal % linelen == 0:
+                        sys.stderr.write(' %12d\n' % vcfResult.prints)
+
+            else:
+                if vcfResult.simpliStats[key] % skip == 0:
+                    sys.stderr.write(msg)
+                    vcfResult.printsReal += 1
+
+                    if vcfResult.printsReal % linelen == 0:
+                        sys.stderr.write(' %12d\n' % vcfResult.prints)
+        else:
+            vcfResult.prints += 1
+            vcfResult.printsReal += 1
+
+            sys.stderr.write(msg)
+
+            if vcfResult.printsReal % linelen == 0:
+                sys.stderr.write(' %12d\n' % vcfResult.prints)
+
+        sys.stderr.flush()
+
+
+
+
     def __str__(self):
         #SL2.40ch01      2118853 .       T       G       222     .       DP=40;AF1=1;CI95=1,1;DP4=0,0,16,23;MQ=60;FQ=-144        GT:PL:DP:GQ     1/1:255,117,0:39:99
 
@@ -262,7 +311,8 @@ class vcfResult(object):
             if register is None:
                 print "register #%d is empty" % register
                 sys.exit( 1 )
-	    if rcount % 100 == 0:
+
+            if rcount % 100 == 0:
                 sys.stderr.write("\n")
                 sys.stderr.flush()
 
@@ -286,7 +336,7 @@ class vcfResult(object):
             if ( vcfResult.excludHET    ) and ( desti.find(',') != -1 ):
                 vcfResult.simpliStats['Heterozygous Dest'] += 1
                 #print "heretozygous: %s" % desti
-                sys.stderr.write('h')
+                self.printprogress('h', key='Heterozygous Dest', skip=vcfResult.print_every)
                 #return ""
                 continue
 
@@ -297,7 +347,7 @@ class vcfResult(object):
                         if len(alt) > 1:
                             vcfResult.simpliStats['Heterozygous Indel'] += 1
                             #print "has het indel: %s > %s" % ( desti, alt )
-                            sys.stderr.write('I')
+                            self.printprogress('I', key='Heterozygous Indel', skip=vcfResult.print_every)
                             #return ""
                             continue
 
@@ -305,7 +355,7 @@ class vcfResult(object):
                     if ( len( desti ) > 1 ):
                         vcfResult.simpliStats['Homozygous Indel'] += 1
                         #print "has hom indel: %s" % desti
-                        sys.stderr.write('i')
+                        self.printprogress('i', key='Homozygous Indel', skip=vcfResult.print_every)
                         #return ""
                         continue
 
@@ -313,7 +363,7 @@ class vcfResult(object):
                     vcfResult.simpliStats['Source Indel'] += 1
                     # todo: if len(src) != len(tgt)
                     #print "not single nucleotide source: %s" % str(register)
-                    sys.stderr.write('s')
+                    self.printprogress('s', key='Source Indel', skip=vcfResult.print_every)
                     #return ""
                     continue
 
@@ -357,7 +407,7 @@ class vcfResult(object):
         if (vcfResult.excludeSingleton) and (ns == 1):
             vcfResult.simpliStats['Singleton 1'] += 1
             #print "singleton ns: %s" % str(srcs)
-            sys.stderr.write('1')
+            self.printprogress('1', key='Singleton 1', skip=vcfResult.print_every)
             return ""
 
         for src in sorted( srcs ):
@@ -378,7 +428,7 @@ class vcfResult(object):
                 if (vcfResult.excludeSingleton) and (nu == 1):
                     vcfResult.simpliStats['Singleton 2'] += 1
                     #print "singleton 1: %s" % str(srcs)
-                    sys.stderr.write('2')
+                    self.printprogress('2', key='Singleton 2', skip=vcfResult.print_every)
                     continue
 
                 files_str = ",".join( files )
@@ -390,11 +440,11 @@ class vcfResult(object):
         if len(restr) == 0:
             vcfResult.simpliStats['Singleton 3'] += 1
             #print "singleton l: %s" % str(srcs)
-            sys.stderr.write('3')
+            self.printprogress('3', key='Singleton 3', skip=vcfResult.print_every)
 
         else:
             vcfResult.simpliStats['Ok'] += 1
-            sys.stderr.write('.')
+            self.printprogress('.', key='Ok', skip=vcfResult.print_every)
 
         return restr
 
@@ -495,10 +545,12 @@ class vcfFile(object):
             if len(cols) == 0:
                 self.next()
                 return
+
             elif currLine[0] == "#":
                 if currLine.startswith('##sources='):
                     self.names = currLine[10:].split(';')
                     pp(self.names)
+
                 elif currLine.startswith('##numsources='):
                     numsources = int(currLine[13:])
                     if numsources != len(self.names):
@@ -507,7 +559,6 @@ class vcfFile(object):
                         sys.exit(1)
                     else:
                         print "num sources:",numsources
-
 
                 self.next()
                 return
@@ -518,15 +569,55 @@ class vcfFile(object):
                 self.register['src'  ] =     cols[3]
                 self.register['dst'  ] =     cols[4]
 
-		if len( cols ) > 9:
-	                self.register['desc' ] =     cols[9]
-		else:
-			self.register['desc' ] = ""
+                if len( cols ) > 9:
+                    self.register['desc' ] =     cols[9]
+
+                    try:
+                        #print "has desc"
+                        info  = cols[8].split(':')
+
+                    except:
+                        info  = []
+
+                    #print " info", info
+                    if len(info) > 1:
+                        try:
+                            gtpos = info.index('GT')
+
+                        except:
+                            gtpos = None
+
+                        if gtpos is not None:
+                            #print "  GT pos", gtpos
+                            desc  = self.register['desc' ].split(":")
+                            #print "  desc", desc
+                            if len(info) == len(desc):
+                                #print "   len info == len desc", info, desc
+                                gtinfo = desc[gtpos]
+                                #print "   gtinfo", gtinfo
+                                #print "    gt1", gtinfo[ 0]
+                                #print "    gt2", gtinfo[-1]
+                                if any([gt == '0' for gt in (gtinfo[ 0], gtinfo[-1])]):
+                                    #print "has desc"
+                                    #print " info", info
+                                    #print "  GT pos", gtpos
+                                    #print "  desc", desc
+                                    #print "   len info == len desc", info, desc
+                                    #print "   gtinfo", gtinfo
+                                    #print "    gt1", gtinfo[ 0]
+                                    #print "    gt2", gtinfo[-1]
+                                    #print "   adding src to dst", self.register['src'  ], self.register['dst'  ]
+
+                                    self.register['dst'  ] = ",".join(sorted(list(set([self.register['src'  ]] + self.register['dst'  ].split(",")))))
+                                    #print "   added  src to dst", self.register['dst'  ]
+
+                else:
+                    self.register['desc' ] = ""
 
                 self.register['state'] = self.state
 
             except (RuntimeError, TypeError, NameError):
-		print RuntimeError, TypeError, NameError
+                print RuntimeError, TypeError, NameError
                 print "error getting colums", cols, currLine, "\n"
                 #self.next()
                 #return
@@ -856,14 +947,14 @@ def main(incsv):
             print "error parsing"
             sys.exit(1)
 
-	print cols, cols[:3]
+        print cols, cols[:3]
         data.addFile(*cols[:3])
 
 
 
 
 
-    mfh = openvcffile(outfile, 'w', compresslevel=1)
+    mfh = openvcffile(outfile + '.tmp.vcf.gz', 'w', compresslevel=1)
 
     mfh.write( data.getVcfHeader() )
 
@@ -884,6 +975,8 @@ def main(incsv):
     lines = []
 
     mfh.close()
+
+    os.rename(outfile + '.tmp.vcf.gz', outfile)
 
     print "Finished"
 

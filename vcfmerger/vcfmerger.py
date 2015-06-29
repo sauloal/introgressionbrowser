@@ -136,8 +136,6 @@ def getBits(val):
 
 
 
-
-
 class vcfResult(object):
     """
     Main class controlling the merging and filtering of vcf files
@@ -149,9 +147,11 @@ class vcfResult(object):
     excludeSingleton = None
     noncarefiles     = None
     simpliStats      = None
-    prints           = 0
-    printsReal       = 0
-    print_every      = 100
+    prints           =    0
+    printsReal       =    0
+    printsRealLast   =    0
+    print_every      = 1000
+    linelen          =  100
 
     def __init__(self, simplify=SIMP_NO_SIMPLIFICATION, noncarefiles=[]):
         self.result       = None
@@ -205,7 +205,6 @@ class vcfResult(object):
         if vcfResult.noncarefiles is None:
             vcfResult.noncarefiles = noncarefiles
 
-
     def simplifier(self, srcs):
         """
         Reads each register and simplifies it
@@ -248,7 +247,7 @@ class vcfResult(object):
         return simpl
         #return srcs
 
-    def printprogress(self, msg, key=None, skip=0, linelen=100):
+    def printprogress(self, msg, key=None, skip=0):
         vcfResult.prints += 1
 
         if skip != 0:
@@ -257,29 +256,19 @@ class vcfResult(object):
                     sys.stderr.write(msg)
                     vcfResult.printsReal += 1
 
-                    if vcfResult.printsReal % linelen == 0:
-                        sys.stderr.write(' %12d\n' % vcfResult.prints)
-
             else:
                 if vcfResult.simpliStats[key] % skip == 0:
                     sys.stderr.write(msg)
                     vcfResult.printsReal += 1
-
-                    if vcfResult.printsReal % linelen == 0:
-                        sys.stderr.write(' %12d\n' % vcfResult.prints)
         else:
-            vcfResult.prints += 1
+            sys.stderr.write(msg)
             vcfResult.printsReal += 1
 
-            sys.stderr.write(msg)
-
-            if vcfResult.printsReal % linelen == 0:
-                sys.stderr.write(' %12d\n' % vcfResult.prints)
+        if vcfResult.printsReal % vcfResult.linelen == 0 and vcfResult.printsReal != vcfResult.printsRealLast:
+            vcfResult.printsRealLast = vcfResult.printsReal
+            sys.stderr.write(' {:14,d}\n'.format( vcfResult.prints ) )
 
         sys.stderr.flush()
-
-
-
 
     def __str__(self):
         #SL2.40ch01      2118853 .       T       G       222     .       DP=40;AF1=1;CI95=1,1;DP4=0,0,16,23;MQ=60;FQ=-144        GT:PL:DP:GQ     1/1:255,117,0:39:99
@@ -312,9 +301,9 @@ class vcfResult(object):
                 print "register #%d is empty" % register
                 sys.exit( 1 )
 
-            if rcount % 100 == 0:
-                sys.stderr.write("\n")
-                sys.stderr.flush()
+            #if rcount % 100 == 0:
+            #    sys.stderr.write("\n")
+            #    sys.stderr.flush()
 
             chrom    = register['chrom'   ]
             posit    = register['pos'     ]
@@ -402,6 +391,7 @@ class vcfResult(object):
             for dst in srcs[src]:
                 nv += 1
                 allspps.extend( srcs[src][dst] )
+
         ns = len( set(allspps) )
 
         if (vcfResult.excludeSingleton) and (ns == 1):
@@ -485,15 +475,6 @@ class vcfRegister(dict):
         )
         return res
 
-    #chrom    = None
-    #pos      = None
-    #src      = None
-    #dst      = None
-    #desc     = None
-    #state    = None
-    #filename = None
-    #filedesc = None
-    #filecare = None
 
 
 class vcfFile(object):

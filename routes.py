@@ -1275,8 +1275,7 @@ def init_db():
         """
         If no database defined in config.py. quit
         """
-        print 'no databases given. please edit config.py'
-        sys.exit(1)
+        print '!!!!!!!!! NO DATABASES GIVEN. PLEASE ADD DATABASES !!!!!!!!!'
 
     else:
         with app.app_context():

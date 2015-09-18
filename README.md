@@ -1,5 +1,5 @@
 Introgression Viewer
-Saulo Aflitos - 2013-2014
+Saulo Aflitos - 2013-2015
 sauloalves.aflitos@wur.nl
 Cluster Bioinformatics
 Plant Research International - PRI

@@ -16,12 +16,12 @@
 
 
         <script type="text/javascript">
-		var encbitsize = {{ encbitsize }};
-		var encrypter  = new JSEncrypt(default_key_size=encbitsize);
-		var pubkey     = {{ include_file_multiline('rsa_'+encbitsize+'_pub.pem')  }};
-        	encrypter.setPublicKey(  pubkey  );
-		var encrypted  = encrypter.encrypt( "test" );
-		console.log( "encrypted ", encrypted );
+            var encbitsize = {{ encbitsize                                       }};
+            var pubkey     = {{ include_file_multiline(rsa_public_key_file_name) }};
+            var encrypter  = new JSEncrypt(default_key_size=encbitsize);
+                encrypter.setPublicKey(  pubkey  );
+            var encrypted  = encrypter.encrypt( "test" );
+            console.log( "encrypted ", encrypted );
         </script>
 
 <!--{- include 'decrypto.html' -}-->

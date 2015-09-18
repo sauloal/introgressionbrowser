@@ -1,8 +1,15 @@
 #decide whether to have user control or not
 HAS_LOGIN    = False
 
+#decide whether to have ssl or not
+USE_SSL        = False
+SSL_KEY_LENGTH = 2048
+
 #define port to server webpage
-SERVER_PORT               = 10000
+SERVER_PORT    = 10000
+
+#defined ip to serve. 127.0.0.1 for local computer, 0.0.0.0 for any computer
+SERVER_IP      = '127.0.0.1'
 
 # pages which can be seen without login
 LIBRE_PATHS = [

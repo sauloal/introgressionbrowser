@@ -3,6 +3,7 @@ import sys
 import io
 import base64
 import subprocess
+import shutil
 
 import ssl
 from Crypto.PublicKey import RSA
@@ -16,8 +17,9 @@ librepoints = [
 IDEBUG                    = False
 USE_SQL                   = True
 MAX_CONTENT_LENGTH        = 128*1024*1024
-SSL_KEY_LENGTH            = 2048
-
+DEFAULT_SSL_KEY_SIZE      = 2048
+DEFAULT_SERVER_PORT       = 10000
+DEFAULT_SERVER_IP         = '127.0.0.1'
 
 print "IMPORTING FUNCTIONS"
 sys.path.insert(0, os.path.dirname(os.path.abspath( __file__ )))
@@ -59,6 +61,7 @@ else:
 #    return Response(content, mimetype=mimetype)
 
 
+
 def add_default_users():
     if not check_user_exists("admin"):
         print "admin user does not exists. CREATING admin user with default password admin"
@@ -74,31 +77,42 @@ def add_default_users():
             raise
 
 
+
 class encryption(object):
-    def __init__(self, data_folder):
-        self.data_folder = data_folder
-        self.keylen_file = os.path.join( data_folder, "config.keylen" )
+    def __init__(self, data_folder, config):
+        self.data_folder    = data_folder
+        self.data_folder_bn = data_folder.replace('/','').replace('\\','').replace('.','').replace(' ','')
+        self.key_bn         = os.path.join( data_folder, self.data_folder_bn )
 
-        if not os.path.exists( self.keylen_file ):
-            print "keylen file %s does not exists. CREATING with default %d" % ( self.keylen_file, 2048 )
-            open(self.keylen_file, 'w').write(str(2048))
-
-        self.RSA_KEY_SIZE              = int(open(self.keylen_file     , 'r' ).read())
+        self.RSA_KEY_SIZE              = config['SSL_KEY_LENGTH']
         print "RSA_KEY_SIZE", self.RSA_KEY_SIZE
 
 
-        self.rsa_private_key_file_name = 'rsa_%d_priv.pem' % self.RSA_KEY_SIZE
-        #self.rsa_private_key_file_name = os.path.join( "templates", 'rsa_%d_priv.pem' % self.RSA_KEY_SIZE )
-        self.rsa_public_key_file_name  = os.path.join( "templates", 'rsa_%d_pub.pem'  % self.RSA_KEY_SIZE )
+        self.rsa_private_key_file_name =                            '%s_rsa_%d_priv.pem'              % (self.key_bn        , self.RSA_KEY_SIZE)
+        self.rsa_public_key_file_name2 =                            '%s_rsa_%d_pub.pem'               % (self.key_bn        , self.RSA_KEY_SIZE)
+        self.rsa_public_key_file_name3 = os.path.join( dir_path   , "templates", '%s_rsa_%d_pub.pem'  % (self.data_folder_bn, self.RSA_KEY_SIZE) )
+        self.rsa_public_key_file_name  =                            '%s_rsa_%d_pub.pem'               % (self.data_folder_bn, self.RSA_KEY_SIZE)
 
-        if ( not os.path.exists( self.rsa_private_key_file_name ) ) or ( not os.path.exists( self.rsa_public_key_file_name ) ):
+        print "rsa private key file name     ", self.rsa_private_key_file_name
+        print "rsa public  key file name full", self.rsa_public_key_file_name2
+        print "rsa public  key file name bkp ", self.rsa_public_key_file_name3
+        print "rsa public  key file name temp", self.rsa_public_key_file_name
+
+        if ( not os.path.exists( self.rsa_private_key_file_name ) ) or ( not os.path.exists( self.rsa_public_key_file_name2 ) ):
+            print "one of the ssl keys is missing. deleting"
             if ( os.path.exists( self.rsa_private_key_file_name ) ):
+                print "ssl key % exists. deleting" % self.rsa_private_key_file_name
                 os.remove(self.rsa_private_key_file_name)
 
-            if ( os.path.exists( self.rsa_public_key_file_name ) ):
-                os.remove(self.rsa_public_key_file_name)
+            if ( os.path.exists( self.rsa_public_key_file_name2 ) ):
+                print "ssl key % exists. deleting" % self.rsa_public_key_file_name2
+                os.remove(self.rsa_public_key_file_name2)
 
-            print "PUBLIC KEY %s OR PRIVATE KEY %s DOES NOT EXISTS. CREATING" % (self.rsa_private_key_file_name, self.rsa_public_key_file_name)
+            if ( os.path.exists( self.rsa_public_key_file_name3 ) ):
+                print "ssl key % exists. deleting" % self.rsa_public_key_file_name3
+                os.remove(self.rsa_public_key_file_name3)
+
+            print "PUBLIC KEY %s OR PRIVATE KEY %s DOES NOT EXISTS. CREATING" % (self.rsa_private_key_file_name, self.rsa_public_key_file_name2)
             #(pubkey, privkey) = rsa.newkeys(RSA_KEY_SIZE, accurate=True, poolsize=1)
             #open(rsa_public_key_file_name , 'w').write( pubkey.save_pkcs1()  )
             #open(rsa_private_key_file_name, 'w').write( privkey.save_pkcs1() )
@@ -107,14 +121,22 @@ class encryption(object):
             self.privkey = RSA.generate(self.RSA_KEY_SIZE)
             self.pubkey  = self.privkey.publickey()
 
-            open(self.rsa_public_key_file_name , 'w').write( self.pubkey.exportKey('PEM')  )
+            open(self.rsa_public_key_file_name2, 'w').write( self.pubkey.exportKey( 'PEM') )
             open(self.rsa_private_key_file_name, 'w').write( self.privkey.exportKey('PEM') )
 
             print "saved public and private keys"
 
 
+        if os.path.exists(self.rsa_public_key_file_name3):
+            print "temporary rsa pub key %s exists. deleting" % ( self.rsa_public_key_file_name3 )
+            os.remove(self.rsa_public_key_file_name3)
+
+
+        shutil.copy2(self.rsa_public_key_file_name2, self.rsa_public_key_file_name3)
+
+
         self.rsa_private_key      = RSA.importKey(open(self.rsa_private_key_file_name, 'r').read())
-        self.rsa_public_key       = RSA.importKey(open(self.rsa_public_key_file_name , 'r').read())
+        self.rsa_public_key       = RSA.importKey(open(self.rsa_public_key_file_name2, 'r').read())
 
         self.enc_cipher           = PKCS1_v1_5.new(self.rsa_public_key )
         self.dec_cipher           = PKCS1_v1_5.new(self.rsa_private_key)
@@ -161,23 +183,45 @@ class encryption(object):
 
 
 
-
-def create_self_signed_cert(cert_dir=".", cert_name="server"):
+def create_self_signed_cert(cert_dir=".", cert_name="server", key_size=DEFAULT_SSL_KEY_SIZE):
     print "generating self signed certificate"
     C_F = os.path.join(os.path.abspath(cert_dir), cert_name + ".crt")
     K_F = os.path.join(os.path.abspath(cert_dir), cert_name + ".key")
 
     if not os.path.exists(C_F) or not os.path.exists(K_F):
         print " certificates do not exists. creating"
-        cmdline = "openssl req  -nodes -new -newkey rsa:%(key_length)d -x509 -batch -days 365 -extensions v3_req -keyout %(key_file)s -out %(cert_file)s" % {"key_length": SSL_KEY_LENGTH, "key_file": K_F, "cert_file": C_F }
+        cmdline = "openssl req  -nodes -new -newkey rsa:%(key_length)d -x509 -batch -days 365 -extensions v3_req -keyout %(key_file)s -out %(cert_file)s" % {"key_length": key_size, "key_file": K_F, "cert_file": C_F }
         print "  running:", cmdline
         os.system(cmdline)
+
     else:
         print " certificates exists. skipping"
 
     return (C_F, K_F)
 
 
+
+
+##VARIABLES
+#hasLogin                  = False
+#SERVER_PORT               = 10000
+#librepaths = [
+#    '/api',
+#    '/favicon.ico'
+#]
+#DEBUG                     = True
+#USE_SSL                   = False
+#
+#MAX_NUMBER_OF_COLUMNS     = 300
+#MAX_CONTENT_LENGTH        = 128 * 1024 * 1024
+#USE_SQL                   = True
+#INFOLDER                  = None
+#
+#
+#SECRET_KEY                = None
+#USER_DATABASE_FILE        = None
+#SECRET_FILE               = None
+#ENCRYPTION_INST           = None
 def load_config( args ):
     if len(args) == 0:
         print "no config file or command given"
@@ -185,7 +229,10 @@ def load_config( args ):
 
     variables = {
         'HAS_LOGIN'                 : False,
-        'SERVER_PORT'               : 10000,
+        'USE_SSL'                   : False,
+        'SSL_KEY_LENGTH'            : DEFAULT_SSL_KEY_SIZE,
+        'SERVER_PORT'               : DEFAULT_SERVER_PORT,
+        'SERVER_IP'                 : DEFAULT_SERVER_IP,
 
         'DEBUG'                     : True,
 
@@ -195,33 +242,7 @@ def load_config( args ):
             '/api',
             '/favicon.ico'
         ],
-
-        'IDEBUG'                    : IDEBUG,
-        'getManager'                : getManager,
-        'INTERFACE'                 : interface
     }
-
-
-    ##VARIABLES
-    #hasLogin                  = False
-    #SERVER_PORT               = 10000
-    #librepaths = [
-    #    '/api',
-    #    '/favicon.ico'
-    #]
-    #DEBUG                     = True
-    #USE_SSL                   = False
-    #
-    #MAX_NUMBER_OF_COLUMNS     = 300
-    #MAX_CONTENT_LENGTH        = 128 * 1024 * 1024
-    #USE_SQL                   = True
-    #INFOLDER                  = None
-    #
-    #
-    #SECRET_KEY                = None
-    #USER_DATABASE_FILE        = None
-    #SECRET_FILE               = None
-    #ENCRYPTION_INST           = None
 
 
     INFOLDER = os.path.abspath( args[0] )
@@ -242,7 +263,7 @@ def load_config( args ):
         secret = os.urandom(24)
         open(SECRET_FILE, 'wb').write(secret)
 
-    SECRET_KEY                =     open(SECRET_FILE     , 'rb').read().strip()
+    SECRET_KEY         =  open(SECRET_FILE     , 'rb').read().strip()
     print "SECRET KEY  ", repr(SECRET_KEY)
     variables['SECRET_FILE'] = SECRET_FILE
     variables['SECRET_KEY' ] = SECRET_KEY
@@ -251,8 +272,10 @@ def load_config( args ):
 
     config_file      = os.path.join( INFOLDER, 'config.py'     )
     if not os.path.exists( config_file ):
-        print "config file %s does not exists" % config_file
-        sys.exit( 1 )
+        print "config file %s does not exists. COPYING DEFAULT" % config_file
+        config_template = os.path.join(dir_path, 'config.template')
+        shutil.copy2(config_template, config_file)
+
 
     print "loading config", config_file
     lcl = {}
@@ -264,6 +287,10 @@ def load_config( args ):
             variables[k] = lcl[k]
 
 
+
+    variables['IDEBUG'    ] = IDEBUG
+    variables['getManager'] = getManager
+    variables['INTERFACE' ] = interface
 
     app.before_first_request(init_db)
 
@@ -281,9 +308,10 @@ def load_config( args ):
     if variables['HAS_LOGIN']:
         print "LOGIN ENABLED"
         print "INITIALIZING DB"
-        USER_DATABASE_FILE = os.path.join( INFOLDER, 'users.sqlite' )
-        variables['USER_DATABASE_FILE'] = USER_DATABASE_FILE
 
+        USER_DATABASE_FILE = os.path.join( INFOLDER, 'users.sqlite' )
+
+        variables[ 'USER_DATABASE_FILE'     ] = USER_DATABASE_FILE
         app.config['DATABASE_FILE'          ] = USER_DATABASE_FILE
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + app.config['DATABASE_FILE']
         app.config['SQLALCHEMY_ECHO'        ] = False
@@ -294,34 +322,37 @@ def load_config( args ):
 
 
 
-        print "INITIALIZING ENCRYPTION"
-        app.config["ENCRYPTION_INST"] = encryption( INFOLDER )
+    print "INITIALIZING ENCRYPTION"
 
-        print "ENCRYPTION KEY SIZE", app.config["ENCRYPTION_INST"].RSA_KEY_SIZE
-        #jsonpickle.set_preferred_backend('simplejson')
-        #jsonpickle.set_encoder_options('simplejson', ensure_ascii=True, sort_keys=True, indent=1)
+    app.config["ENCRYPTION_INST"] = encryption( INFOLDER, app.config )
 
-        app.jinja_env.globals['encbitsize'            ] = str( app.config["ENCRYPTION_INST"].RSA_KEY_SIZE )
+    print "ENCRYPTION KEY SIZE", app.config["ENCRYPTION_INST"].RSA_KEY_SIZE
+    #jsonpickle.set_preferred_backend('simplejson')
+    #jsonpickle.set_encoder_options('simplejson', ensure_ascii=True, sort_keys=True, indent=1)
 
-        #http://stackoverflow.com/questions/9767585/insert-static-files-literally-into-jinja-templates-without-parsing-them
-        def include_file(name):
-            return Markup(app.jinja_loader.get_source(app.jinja_env, name)[0])
+    app.jinja_env.globals['encbitsize'              ] = str( app.config["ENCRYPTION_INST"].RSA_KEY_SIZE             )
+    app.jinja_env.globals['rsa_public_key_file_name'] = str( app.config["ENCRYPTION_INST"].rsa_public_key_file_name )
 
-        def include_file_multiline(name):
-            lines     = app.jinja_loader.get_source(app.jinja_env, name)[0]
-            #lines.replace("RSA PUBLIC KEY", "PUBLIC KEY")
-            lines     = lines.split("\n")
-            lines     = [ "'" + l + "\\n' +" for l in lines ]
-            lines[-1] = lines[-1].strip(" +")
-            return Markup("\n".join( lines ))
+    #http://stackoverflow.com/questions/9767585/insert-static-files-literally-into-jinja-templates-without-parsing-them
+    def include_file(name):
+        return Markup(app.jinja_loader.get_source(app.jinja_env, name)[0])
 
-        app.jinja_env.globals['include_file'          ] = include_file
-        app.jinja_env.globals['include_file_multiline'] = include_file_multiline
+    def include_file_multiline(name):
+        lines     = app.jinja_loader.get_source(app.jinja_env, name)[0]
+        #lines.replace("RSA PUBLIC KEY", "PUBLIC KEY")
+        lines     = lines.split("\n")
+        lines     = [ "'" + l + "\\n' +" for l in lines ]
+        lines[-1] = lines[-1].strip(" +")
+        return Markup("\n".join( lines ))
+
+    app.jinja_env.globals['include_file'          ] = include_file
+    app.jinja_env.globals['include_file_multiline'] = include_file_multiline
 
 
 
+    if variables['USE_SSL']:
         print "INITIALIZING SSL"
-        ssl_cert, ssl_key = create_self_signed_cert(cert_dir=dir_path, cert_name="server")
+        ssl_cert, ssl_key = create_self_signed_cert(cert_dir=INFOLDER, cert_name=app.config["ENCRYPTION_INST"].key_bn, key_size=app.config["ENCRYPTION_INST"].RSA_KEY_SIZE)
         app.config["SSL_CERT"      ] = ssl_cert
         app.config["SSL_KEY"       ] = ssl_key
 
@@ -362,7 +393,7 @@ def run_action(args):
 
 
     if ( action not in ("init") ) and ( not app.config['HAS_LOGIN'] ):
-        print "no login, no add/gen user"
+        print "login not enabled, therefore, no possible to add/gen/list user"
         sys.exit(1)
 
 
@@ -486,4 +517,3 @@ def run_action(args):
 #        open(C_F, "wt").write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
 #        open(K_F, "wt").write(crypto.dump_privatekey( crypto.FILETYPE_PEM, k   ))
 #    return (C_F, K_F)
-

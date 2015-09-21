@@ -158,7 +158,7 @@ def main(args):
     parser.add_argument( '-f'  , '--fasta', '--infasta'                    , dest='infasta'                     , default=None      , nargs='?',                       type=str  , help='input reference fasta. requires split size')
     parser.add_argument( '-s'  , '--size' ,                                  dest='size'                        , default=0         , nargs='?',                       type=int  , help='split size')
     parser.add_argument( '-p'  , '--proj' , '--project'                    , dest='project'                     , default=None      , nargs='?',                       type=str  , help='project name')
-    parser.add_argument( '-o'  , '--out'  , '--outfile'                    , dest='outfile'                     , default='makefile', nargs='?',                       type=str  , help='output name [default: makefile]')
+    parser.add_argument( '-o'  , '--out'  , '--outfile'                    , dest='outfile'                     , default='Makefile', nargs='?',                       type=str  , help='output name [default: makefile]')
     parser.add_argument( '-ec' , '--excluded-chrom'                        , dest='excluded_chroms'             , default=[]        ,            action='append'     , type=str  , help='Do not use the following chromosomes' )
     parser.add_argument( '-ic' , '--included-chrom'                        , dest='included_chroms'             , default=[]        ,            action='append'     , type=str  , help='Use EXCLUSIVELY these chromosomes' )
     #parser.add_argument( '-g' , '--gff'  , '--ingff'                      , dest='ingff'                       , default=None      , nargs='?',                       type=str  , help='input gff file')
@@ -319,24 +319,31 @@ def main(args):
 
 
 
+    if not os.path.exists(projname):
+        os.mkdir(projname)
+
+    outmake1 = outfile + '_' + projname
+    outmake2 = os.path.join(projname, outmake1)
+
+    writer1 = makewriter( outf=outmake1, dry=dry )
+    writer2 = makewriter( outf=outmake2, dry=dry )
+
+    print "outmake1", outmake1
+    print "outmake2", outmake2
 
 
-    outmake = outfile + '_' + projname
 
-    writer  = makewriter( outf=outmake, dry=dry )
-
-
-    writer.raw( "#TIME: " + timestamp        + "\n"   )
-    writer.raw( "#CMD : " + " ".join( args ) + "\n"   )
-    writer.raw( "#PWD : " + os.getcwd()      + "\n\n" )
-    writer.write( projname+".sqlite", 'all', '' )
+    writer1.raw( "#TIME: " + timestamp        + "\n"   )
+    writer1.raw( "#CMD : " + " ".join( args ) + "\n"   )
+    writer1.raw( "#PWD : " + os.getcwd()      + "\n\n" )
+    writer1.write( projname+".sqlite", 'all', '' )
 
 
 
     #vcfmerger/vcfmerger.py short.lst
     inlist_merged = inlist + '.vcf.gz'
     merge_cmd     = "%s %s" % (merger, inlist)
-    writer.write(inlist, inlist_merged, merge_cmd, nick='merged')
+    writer1.write(inlist, inlist_merged, merge_cmd, nick='merged')
 
 
 
@@ -364,7 +371,7 @@ def main(args):
 
     simplify_cmd += " --output " + inlist_merged_simple
 
-    writer.write( inlist_merged, inlist_merged_simple, simplify_cmd, nick='simple')
+    writer1.write( inlist_merged, inlist_merged_simple, simplify_cmd, nick='simple')
 
 
 
@@ -374,7 +381,7 @@ def main(args):
     if infasta:
         #vcfmerger/fasta_spacer.py GENOME.fa 50000
         gff_cmd = "%s %s %s"  % (fasta_spacer, infasta, size)
-        writer.write( infasta, filter_gff, gff_cmd, nick='gff' )
+        writer1.write( infasta, filter_gff, gff_cmd, nick='gff' )
 
 
 
@@ -408,7 +415,7 @@ def main(args):
     filter_cmd = "%s --knife --folder %s --gff %s --input %s %s 2>&1 | tee %s.log" % ( filtergff, projname, filter_gff, inlist_merged_simple, filter_opts, inlist_merged_simple )
     filter_ok  = projname+'.ok'
     filter_gff = inlist_merged_simple + ' ' + filter_gff
-    writer.write(filter_gff , filter_ok, filter_cmd, nick='filter' )
+    writer1.write(filter_gff , filter_ok, filter_cmd, nick='filter' )
 
 
 
@@ -420,37 +427,38 @@ def main(args):
     if smart_threads:
         fasttree_threads_2 = int( smart_threads / fasttree_threads )
         cluster_threads_2  = int( smart_threads / cluster_threads  )
+
         if db_read_threads == 1:
             db_read_threads = smart_threads
 
 
         if fasttree_threads != 1:
-            conv_cmd = "cd %s && $(MAKE) -j %d fasta" % (projname, smart_threads)
-            writer.write( filter_ok, conv_ok + '_fasta', conv_cmd, nick='sub_fasta' )
+            conv_cmd = "cd %s && $(MAKE) -j %d -f %s fasta" % (projname, smart_threads, outmake1)
+            writer1.write( filter_ok, conv_ok + '_fasta', conv_cmd, nick='sub_fasta' )
 
-            conv_cmd = "cd %s && $(MAKE) -j %d tree matrix" % (projname, fasttree_threads_2)
-            writer.write( conv_ok + '_fasta', conv_ok + '_fasttree', conv_cmd, nick='sub_tree' )
+            conv_cmd = "cd %s && $(MAKE) -j %d -f %s tree matrix" % (projname, fasttree_threads_2, outmake1)
+            writer1.write( conv_ok + '_fasta', conv_ok + '_fasttree', conv_cmd, nick='sub_tree' )
 
-            conv_cmd = "cd %s && $(MAKE) -j %d rawfiles" % (projname, smart_threads)
-            writer.write( conv_ok + '_fasttree', conv_ok + '_raw', conv_cmd, nick='sub_raw' )
+            conv_cmd = "cd %s && $(MAKE) -j %d -f %s rawfiles" % (projname, smart_threads, outmake1)
+            writer1.write( conv_ok + '_fasttree', conv_ok + '_raw', conv_cmd, nick='sub_raw' )
         else:
-            conv_cmd = "cd %s && $(MAKE) -j %d rawfiles" % (projname, smart_threads)
-            writer.write( filter_ok, conv_ok + '_raw', conv_cmd, nick='sub_raw' )
+            conv_cmd = "cd %s && $(MAKE) -j %d -f %s rawfiles" % (projname, smart_threads, outmake1)
+            writer1.write( filter_ok, conv_ok + '_raw', conv_cmd, nick='sub_raw' )
 
 
         if merge:
-            conv_cmd = "cd %s && $(MAKE) -j %d subpickles" % (projname, cluster_threads_2)
-            writer.write( conv_ok + '_raw', conv_ok + '_pickle', conv_cmd, nick='sub_pic' )
+            conv_cmd = "cd %s && $(MAKE) -j %d -f %s subpickles" % (projname, cluster_threads_2, outmake1)
+            writer1.write( conv_ok + '_raw', conv_ok + '_pickle', conv_cmd, nick='sub_pic' )
 
-            conv_cmd = "cd %s && $(MAKE) -j %d ok" % (projname, smart_threads)
-            writer.write( conv_ok + '_pickle', conv_ok, conv_cmd, nick='sub' )
+            conv_cmd = "cd %s && $(MAKE) -j %d -f %s ok" % (projname, smart_threads, outmake1)
+            writer1.write( conv_ok + '_pickle', conv_ok, conv_cmd, nick='sub' )
         else:
-            conv_cmd = "cd %s && $(MAKE) -j %d ok" % (projname, cluster_threads_2)
-            writer.write( conv_ok + '_raw', conv_ok, conv_cmd, nick='sub' )
+            conv_cmd = "cd %s && $(MAKE) -j %d -f %s ok" % (projname, cluster_threads_2, outmake1)
+            writer1.write( conv_ok + '_raw', conv_ok, conv_cmd, nick='sub' )
 
     else:
-        conv_cmd = "cd %s && $(MAKE) -j %d" % (projname, sub_threads)
-        writer.write( filter_ok, conv_ok, conv_cmd, nick='sub' )
+        conv_cmd = "cd %s && $(MAKE) -j %d -f %s " % (projname, sub_threads, outmake1)
+        writer1.write( filter_ok, conv_ok, conv_cmd, nick='sub' )
 
 
 
@@ -481,7 +489,7 @@ def main(args):
         walk_cmd = "%s --pickle %s --database %s" % (walk_ram, walk_cmd_opts, projname)
 
         walk_db  = projname+".pickle.gz"
-        writer.write( conv_ok, walk_db, walk_cmd, nick='db' )
+        writer1.write( conv_ok, walk_db, walk_cmd, nick='db' )
 
 
 
@@ -516,9 +524,9 @@ def main(args):
 
     if dopickle:
         walk_cmd    += ' --pickle'
-        writer.write( walk_db, walk_db_sql, walk_cmd, nick='sql' )
+        writer1.write( walk_db, walk_db_sql, walk_cmd, nick='sql' )
     else:
-        writer.write( conv_ok, walk_db_sql, walk_cmd, nick='sql' )
+        writer1.write( conv_ok, walk_db_sql, walk_cmd, nick='sql' )
 
 
 
@@ -545,45 +553,45 @@ cleandb: cleansql
 
 .PHONY: cleansub
 cleansub: cleandb
-\tcd %(projname)s && $(MAKE) clean
+\tcd %(projname)s && $(MAKE) -f %(makefile)s clean
 
 .PHONY: cleansubok
 cleansubok: cleandb
-\tcd %(projname)s && $(MAKE) cleanok
+\tcd %(projname)s && $(MAKE) -f %(makefile)s cleanok
 
 .PHONY: cleansubsubpickles
 cleansubsubpickles: cleandb
-\tcd %(projname)s && $(MAKE) cleansubpickles
+\tcd %(projname)s && $(MAKE) -f %(makefile)s cleansubpickles
 
 .PHONY: cleansubpickles
 cleansubpickles: cleandb
-\tcd %(projname)s && $(MAKE) cleanpickles
+\tcd %(projname)s && $(MAKE) -f %(makefile)s cleanpickles
 
 .PHONY: cleansubrawfiles
 cleansubrawfiles: cleandb
-\tcd %(projname)s && $(MAKE) cleanrawfiles
+\tcd %(projname)s && $(MAKE) -f %(makefile)s cleanrawfiles
 
 .PHONY: cleansubimgs
 cleansubimgs: cleandb
-\tcd %(projname)s && $(MAKE) cleanimgs
+\tcd %(projname)s && $(MAKE) -f %(makefile)s cleanimgs
 
 .PHONY: cleansubtrees
 cleansubtrees: cleandb
-\tcd %(projname)s && $(MAKE) cleantrees
+\tcd %(projname)s && $(MAKE) -f %(makefile)s cleantrees
 
 .PHONY: cleansubmatrices
 cleansubmatrices: cleandb
-\tcd %(projname)s && $(MAKE) cleanmatrices
+\tcd %(projname)s && $(MAKE) -f %(makefile)s cleanmatrices
 
 .PHONY: cleansubfastas
 cleansubfastas: cleandb
-\tcd %(projname)s && $(MAKE) cleanfastas
+\tcd %(projname)s && $(MAKE) -f %(makefile)s cleanfastas
 
 
 
 .PHONY: cleanfilter
 cleanfilter: cleandb
-\tcd %(projname)s && $(MAKE) cleangzs
+\tcd %(projname)s && $(MAKE) -f %(makefile)s cleangzs
 \trm %(subok)s
 
 .PHONY: cleansimple
@@ -601,40 +609,40 @@ clean: cleanmerged
 
 .PHONY: subfasta
 subfasta: filter
-\tcd %(projname)s && $(MAKE) fasta
+\tcd %(projname)s && $(MAKE) -f %(makefile)s fasta
 
 .PHONY: subpng
 subpng: filter
-\tcd %(projname)s && $(MAKE) png
+\tcd %(projname)s && $(MAKE) -f %(makefile)s png
 
 .PHONY: subtree
 subtree: filter
-\tcd %(projname)s && $(MAKE) tree
+\tcd %(projname)s && $(MAKE) -f %(makefile)s tree
 
 .PHONY: submatrix
 submatrix: filter
-\tcd %(projname)s && $(MAKE) matrix
+\tcd %(projname)s && $(MAKE) -f %(makefile)s matrix
 
 .PHONY: subrawfiles
 subrawfiles: filter
-\tcd %(projname)s && $(MAKE) rawfiles
+\tcd %(projname)s && $(MAKE) -f %(makefile)s rawfiles
 
 
 .PHONY: subpickles
 subpickles: filter
-\tcd %(projname)s && $(MAKE) pickles
+\tcd %(projname)s && $(MAKE) -f %(makefile)s pickles
 
 .PHONY: subgpickle
 subgpickle: filter
-\tcd %(projname)s && $(MAKE) gpickle
+\tcd %(projname)s && $(MAKE) -f %(makefile)s gpickle
 
 .PHONY: subsubpickles
 subsubpickles: filter
-\tcd %(projname)s && $(MAKE) subpickles
+\tcd %(projname)s && $(MAKE) -f %(makefile)s subpickles
 
 .PHONY: subok
 subok: filter
-\tcd %(projname)s && $(MAKE) ok
+\tcd %(projname)s && $(MAKE) -f %(makefile)s ok
 
 
 
@@ -681,14 +689,13 @@ list:
         'simple'  : inlist_merged_simple,
         'subok'   : conv_ok,
         'db'      : walk_db,
-        'sql'     : walk_db_sql
+        'sql'     : walk_db_sql,
+        'makefile': outmake1
     }
 
-    writer.raw( cleaners )
+    writer1.raw( cleaners )
 
-    writer.close()
-
-
+    writer1.close()
 
 
 
@@ -697,10 +704,8 @@ list:
 
 
 
-    if not os.path.exists(projname):
-        os.mkdir(projname)
 
-    writer2 = makewriter( outf=os.path.join(projname, outfile), dry=dry )
+
 
 
     subpickles = " ".join( [chrom + '.pickle.gz' for chrom in chroms] )
@@ -988,7 +993,7 @@ list:
     writer2.raw( header )
     writer2.close()
 
-    print "SAVED TO",outmake
+    print "SAVED TO",outmake1,outmake2
 
 
 

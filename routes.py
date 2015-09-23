@@ -592,6 +592,7 @@ def get_tree(db_name, chrom, gene):
         abort(404)
 
     if gene  not in genes:
+        print 'gene',gene, 'not in genes'#,genes
         abort(404)
 
     tree = get_tree_raw(man, chrom, gene)
@@ -633,7 +634,7 @@ def get_aln(db_name, chrom, gene):
         abort(404)
 
     if gene  not in genes:
-        print "gene not in genes"
+        print "gene",gene,"not in genes"#,genes
         abort(404)
 
     aln   = get_aln_raw(man, chrom, gene)
@@ -663,7 +664,7 @@ def get_matrix(db_name, chrom, gene):
         abort(404)
 
     if gene  not in genes:
-        print "gene",gene,"not in genes"
+        print "gene",gene,"not in genes"#,genes
         abort(404)
 
     matrix = get_matrix_raw(man, chrom, gene)
@@ -697,7 +698,7 @@ def get_report(db_name, chrom, gene):
         abort(404)
 
     if gene  not in genes:
-        print "gene",gene,"not in genes"
+        print "gene",gene,"not in genes"#,genes
         abort(404)
 
     #print "getting report", db_name, chrom, gene

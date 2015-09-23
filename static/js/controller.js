@@ -458,12 +458,14 @@ var mainController = function ( $scope, $http, mySharedService ) {
 
 
         console.log('cluster keys', Object.keys($scope.cluster));
+
         for ( var c in $scope.cluster ) {
             console.log('adding cluster', c);
             $scope.clusterNames.push( c );
             $scope.vars.order.rows[ c ] = $scope.cluster[ c ].rows.rowsOrder;
             $scope.vars.order.cols[ c ] = $scope.cluster[ c ].cols.colsOrder;
         }
+
         console.log($scope.vars.order.cols);
 
         if ( $scope.clusterNames.indexOf( $scope.vars.nextRowOrder) < 0 ) {
@@ -599,6 +601,11 @@ var mainController = function ( $scope, $http, mySharedService ) {
     // FUNCTIONS
     //
     $scope.cleanVars                    = function () {
+        $scope.zeroeVars();
+        $scope.startup();
+    };
+
+    $scope.zeroeVars                    = function () {
         $scope.databaseQry      = null;
         $scope.specieQry        = null;
         $scope.chromosomeQry    = null;
@@ -631,13 +638,17 @@ var mainController = function ( $scope, $http, mySharedService ) {
         $scope.clusterlistchrom = null;
         $scope.clusterNames     = null;
         $scope.genes            = null;
-
-        $scope.startup();
     };
 
     $scope.updateFields                 = function () {
         console.log('database changed %o', $scope.database);
         if ($scope.databaseQry) {
+            $scope.specieQry        = null;
+            $scope.chromosomeQry    = null;
+            $scope.geneQry          = null;
+            $scope.groupByQry       = null;
+            $scope.groupByValQry    = null;
+
             $scope.getMtime();
             $scope.getSpecies();
             $scope.getChromosomes();

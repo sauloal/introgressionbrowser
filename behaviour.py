@@ -401,8 +401,9 @@ def run_action(args):
         sys.exit(1)
 
 
-    if   action == "init":
+    if action == "init":
         print "inited"
+
 
     if action == "clean":
         print "cleaning"

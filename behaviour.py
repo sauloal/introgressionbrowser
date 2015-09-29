@@ -246,6 +246,7 @@ def load_config( args ):
 
 
     INFOLDER = os.path.abspath( args[0] )
+
     if not os.path.exists( INFOLDER ):
         print "data folder %s does not exists" % INFOLDER
         sys.exit(1)
@@ -253,15 +254,18 @@ def load_config( args ):
     if not os.path.isdir( INFOLDER ):
         print "data folder %s is not a folder" % INFOLDER
         sys.exit(1)
+
     variables['INFOLDER']       = INFOLDER
 
 
 
     SECRET_FILE        = os.path.join( INFOLDER, "config.secret" )
+
     if not os.path.exists( SECRET_FILE ):
         print "secret file %s does not exists. CREATING" % SECRET_FILE
         secret = os.urandom(24)
         open(SECRET_FILE, 'wb').write(secret)
+
 
     SECRET_KEY         =  open(SECRET_FILE     , 'rb').read().strip()
     print "SECRET KEY  ", repr(SECRET_KEY)
@@ -305,13 +309,13 @@ def load_config( args ):
 
     interface.DEBUG = IDEBUG
 
-    if variables['HAS_LOGIN']:
+    if app.config['HAS_LOGIN']:
         print "LOGIN ENABLED"
         print "INITIALIZING DB"
 
         USER_DATABASE_FILE = os.path.join( INFOLDER, 'users.sqlite' )
 
-        variables[ 'USER_DATABASE_FILE'     ] = USER_DATABASE_FILE
+        app.config['USER_DATABASE_FILE'     ] = USER_DATABASE_FILE
         app.config['DATABASE_FILE'          ] = USER_DATABASE_FILE
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + app.config['DATABASE_FILE']
         app.config['SQLALCHEMY_ECHO'        ] = False
@@ -350,7 +354,7 @@ def load_config( args ):
 
 
 
-    if variables['USE_SSL']:
+    if app.config['USE_SSL']:
         print "INITIALIZING SSL"
         ssl_cert, ssl_key = create_self_signed_cert(cert_dir=INFOLDER, cert_name=app.config["ENCRYPTION_INST"].key_bn, key_size=app.config["ENCRYPTION_INST"].RSA_KEY_SIZE)
         app.config["SSL_CERT"      ] = ssl_cert
@@ -406,7 +410,22 @@ def run_action(args):
 
         if app.config['HAS_LOGIN']:
             if app.config["ENCRYPTION_INST"] is not None:
-                files_to_del.extend( [ app.config["ENCRYPTION_INST"].keylen_file, app.config["ENCRYPTION_INST"].rsa_private_key_file_name, app.config["ENCRYPTION_INST"].rsa_public_key_file_name ] )
+                files_to_del.extend( 
+                    [ 
+                        app.config["ENCRYPTION_INST"].rsa_private_key_file_name, 
+                        app.config["ENCRYPTION_INST"].rsa_public_key_file_name ,
+                        app.config["ENCRYPTION_INST"].rsa_public_key_file_name2,
+                        app.config["ENCRYPTION_INST"].rsa_public_key_file_name3
+                    ]
+                )
+
+        if app.config['USE_SSL']:
+            files_to_del.extend( 
+                [ 
+                    app.config["SSL_CERT"       ]                          ,
+                    app.config["SSL_KEY"        ]
+                ] 
+            )
 
         for filename in files_to_del:
             if filename is None:
@@ -416,8 +435,10 @@ def run_action(args):
             if os.path.exists( filename ):
                 os.remove( filename )
                 print "... delete ...",
+
             else:
                 print "... skip ...",
+
             print "DONE"
 
     elif action == "adduser":

@@ -44,7 +44,7 @@ script:
   - python ibrowser.py data/ clean
 
 #with login with ssh
-  - sed -i 's/USE_SSL        = False/s/USE_SSL        = True'  data/config.py
+  - sed -i 's/USE_SSL        = False/USE_SSL        = True/'  data/config.py
   - cat data/config.py
   - python ibrowser.py data/ adduser test1 pass1
   - python ibrowser.py data/ adduser test2 pass2

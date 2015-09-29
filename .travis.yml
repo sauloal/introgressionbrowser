@@ -30,7 +30,8 @@ script:
 #  - python ibrowser.py data/ listusers
 #  - python ibrowser.py data/ deluser test1
 #  - python ibrowser.py data/ deluser test2
-  - python ibrowser.py data/ clean
+#  - python ibrowser.py data/ clean
+
 #with login no ssl
   - python ibrowser.py data/ init
   - sed -i 's/HAS_LOGIN    = False/HAS_LOGIN    = True/'       data/config.py
@@ -41,6 +42,7 @@ script:
   - python ibrowser.py data/ deluser test1
   - python ibrowser.py data/ deluser test2
   - python ibrowser.py data/ clean
+
 #with login with ssh
   - sed -i 's/USE_SSL        = False/s/USE_SSL        = True'  data/config.py
   - cat data/config.py
@@ -50,6 +52,7 @@ script:
   - python ibrowser.py data/ deluser test1
   - python ibrowser.py data/ deluser test2
   - python ibrowser.py data/ clean
+
 #no login with ssh
 #  - sed -i 's/HAS_LOGIN    = True/HAS_LOGIN    = False/'       data/config.py
 #  - cat data/config.py

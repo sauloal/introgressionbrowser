@@ -25,11 +25,11 @@ script:
 #no login no ssl
   - python ibrowser.py data/ init
   - cat data/config.py
-  - python ibrowser.py data/ adduser test1 pass1
-  - python ibrowser.py data/ adduser test2 pass2
-  - python ibrowser.py data/ listusers
-  - python ibrowser.py data/ deluser test1
-  - python ibrowser.py data/ deluser test2
+#  - python ibrowser.py data/ adduser test1 pass1
+#  - python ibrowser.py data/ adduser test2 pass2
+#  - python ibrowser.py data/ listusers
+#  - python ibrowser.py data/ deluser test1
+#  - python ibrowser.py data/ deluser test2
   - python ibrowser.py data/ clean
 #with login no ssl
   - python ibrowser.py data/ init
@@ -53,11 +53,11 @@ script:
 #no login with ssh
   - sed -i 's/HAS_LOGIN    = True/HAS_LOGIN    = False/'       data/config.py
   - cat data/config.py
-  - python ibrowser.py data/ adduser test1 pass1
-  - python ibrowser.py data/ adduser test2 pass2
-  - python ibrowser.py data/ listusers
-  - python ibrowser.py data/ deluser test1
-  - python ibrowser.py data/ deluser test2
+#  - python ibrowser.py data/ adduser test1 pass1
+#  - python ibrowser.py data/ adduser test2 pass2
+#  - python ibrowser.py data/ listusers
+#  - python ibrowser.py data/ deluser test1
+#  - python ibrowser.py data/ deluser test2
   - python ibrowser.py data/ clean
 #  - python ibrowser.py data/ &
 #  - pid=$! && echo PID && sleep 60s && kill -9 $pid && true"

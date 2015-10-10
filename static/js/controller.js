@@ -283,7 +283,7 @@ var mainController = function ( $scope, $http, mySharedService ) {
 
                 console.log('REQUESTING DATA');
 
-                $http.get('api/data/'+$scope.databaseQry+'/'+$scope.specieQry+'/'+$scope.chromosomeQry)
+                $http.get('api/data/'+$scope.databaseQry+'/'+encodeURIComponent(encodeURIComponent($scope.specieQry))+'/'+$scope.chromosomeQry)
                     .success( $scope.receiveData      )
                     .error(   $scope.receiveDataError );
 

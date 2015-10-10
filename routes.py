@@ -2,6 +2,7 @@ import glob
 import sys
 import os
 import base64
+import urllib
 
 from operator import itemgetter
 
@@ -736,6 +737,8 @@ def get_cluster(db_name, ref, chrom):
         print "no such manager"
         abort(404)
 
+    ref     = urllib.unquote(ref)
+
     cluster = get_cluster_raw(man, ref, chrom)
     #print cluster
     #if cluster is None:
@@ -844,11 +847,14 @@ def get_cluster(db_name, ref, chrom):
 
 @app.route("/api/data/<db_name>/<ref>/<chrom>", methods=['GET'])
 def get_data(db_name, ref, chrom):
+    print "get data"
     man  = getManager( db_name )
 
     if man is None:
         print "no such manager"
         abort(404)
+
+    ref  = urllib.unquote(ref)
 
     data = check_get_data(man, ref, chrom, request)
 

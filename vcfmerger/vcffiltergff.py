@@ -80,7 +80,9 @@ def main(args):
     config['negative' ] = options.negative
     config['knife'    ] = options.knife
 
-    verbose            = options.verbose
+    verbose             = options.verbose
+
+
 
     if not config['outfolder']:
         config['outfolder'] = 'walk_out'
@@ -114,11 +116,18 @@ def main(args):
 
     config['idx'] = filemanager.readIndex(indexFile)
 
+
     if config['ingff'] is not None:
         """
         Creates a gff reader instance
         """
         config['ingffreader'] = gffReader( config['ingff'] , negative=config['negative'], protein=config['protein'], verbose=verbose)
+
+        print "IDX", config['idx']
+        print "GFF", config['ingffreader'].index
+
+        assert set(config['idx'].keys()) >= set(config['ingffreader'].index.keys()), "VCF chromosomes (%s) are not a subset from GFF (%s)" % (", ".join(config['idx'].keys()), ", ".join(config['ingffreader'].index.keys()) )
+
 
     if config['inchr'] is not None:
         """
@@ -126,18 +135,22 @@ def main(args):
         """
         config['insekpos'] = config['idx'][config['inchr']]
 
+
     """
     Creates a VCFCONCAT instance
     """
     vcfconcat.readSources(config)
+
 
     """
     Read the data and filter
     """
     readData(config, verbose=verbose)
 
+
     with open(config['outfolder']+'.ok', 'w') as fhd:
         fhd.write(str(config))
+
 
     return config
 
@@ -149,10 +162,12 @@ def readData(config, verbose=False):
 
     print "reading data"
 
+
     """
     Creates a VCFMERGER instance to read the VCF file
     """
     config['infhd']  = filemanager.openvcffile(config['infile'], 'r')
+
 
 
     if config['outfile'] is None:
@@ -177,6 +192,8 @@ def readData(config, verbose=False):
     else:
         config['outfn']  = config['outfile']
 
+
+
     """
     Creates a VCFMERGER to save the output
     """
@@ -196,6 +213,8 @@ def readData(config, verbose=False):
             If a particular chromosome has been selected, go to position in file
             """
             print "reading data :: has idx :: seeking chrom %s" % config['inchr']
+
+            assert config['inchr'] in config['idx'], "requested chromosome %s not in vcf file: %s" % ( config['inchr'], config['idx'].keys() )
 
             config['infhd'].seek( config['insekpos'] )
             runName = config['inchr']
@@ -266,13 +285,16 @@ def readData(config, verbose=False):
         #print cols
 
         if lastChro != chro:
-            print chro
+            print "Chromosome", chro
+            assert chro in config['idx'], "chromosome %s not in vcf file: %s" % ( chro, config['idx'].keys() )
+
             if lastChro is not None:
                 if inchr is not None:
                     if inchr != lastChro:
                         print "reading data :: %s :: %s :: skipping exporting" % (runName, lastChro)
                         lastChro = chro
                         continue
+
                     else:
                         finalChro = True
 
@@ -300,7 +322,7 @@ def readData(config, verbose=False):
 
         if ( inchr is not None ):
             """
-            If a specific chromosome mas requested
+            If a specific chromosome was requested
             """
 
             if ( inchr   != chro )                           :
@@ -474,11 +496,15 @@ def readData(config, verbose=False):
     keys = sorted(list(set(valids.keys() + numSnps.keys())))
     for chro in keys:
         vals = 0
+
         if chro in valids:
             vals = valids[chro]
+
         tot = 0
+
         if chro in numSnps:
             tot = numSnps[chro]
+
         print "  CHROM %s TOTAL %12d VALID %12d" % ( chro, tot, vals )
 
     return 0

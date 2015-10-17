@@ -847,14 +847,16 @@ def get_cluster(db_name, ref, chrom):
 
 @app.route("/api/data/<db_name>/<ref>/<chrom>", methods=['GET'])
 def get_data(db_name, ref, chrom):
-    print "get data"
+    print "get data", db_name, ref, chrom
+
     man  = getManager( db_name )
 
     if man is None:
         print "no such manager"
         abort(404)
 
-    ref  = urllib.unquote(ref)
+    ref  = urllib.unquote(urllib.unquote(urllib.unquote(ref)))
+    print "get data", db_name, ref, chrom
 
     data = check_get_data(man, ref, chrom, request)
 
@@ -1063,8 +1065,9 @@ def get_clusters_raw(  man ):
 
 
 def check_get_data(man, ref, chrom, request):
+    ref = unicode(ref)
     if ref not in man.getSpps():
-        print "no such species %s" % ref
+        print "no such species %s. possible are: %s" % (ref, ", ".join(man.getSpps()))
         abort(404)
 
     if chrom not in man.getChroms():

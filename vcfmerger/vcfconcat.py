@@ -240,7 +240,7 @@ def readSources(config):
             if line[0]   == '#':
                 header += line + "\n"
                 if line.startswith('##sources='):
-                    names = line[10:].split(';')
+                    names = line[10:].split('|')
                     for name in names:
                         sources[name] = []
                     #pp(sources)
@@ -334,7 +334,7 @@ def readData(config):
         posi = int(cols[1])
         src  =     cols[3]
         dst  =     cols[4]
-        spps =     cols[9].split(",")
+        spps =     cols[9].split("|")
 
 
 
@@ -1032,7 +1032,7 @@ def printfilecoords(config, chro):
     with open(outfile, 'w') as fhd:
         fhd.write( str( len( coords ) ) )
         fhd.write( "\n" )
-        fhd.write( ",".join( [ str(x) for x in sorted(coords) ] ) )
+        fhd.write( "|".join( [ str(x) for x in sorted(coords) ] ) )
 
 
 

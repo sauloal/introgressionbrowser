@@ -776,9 +776,9 @@ class walker(object):
                 if not cluster_dotree:
                     clusterParams.append( '--notree' )
                 if not cluster_dorows:
-                    clusterParams.append( ' --norows' )
+                    clusterParams.append( '--norows' )
                 if not cluster_docols:
-                    clusterParams.append( ' --nocols' )
+                    clusterParams.append( '--nocols' )
                 if cluster_extension:
                     clusterParams.extend( ['--extension', cluster_extension] )
                 if cluster_threads:
@@ -933,6 +933,9 @@ class walker(object):
 
                         cparams = [ '--output', cluster_name, '--indir', chromPath ]
                         cparams.extend( clusterParams )
+
+                        print "walking chromosome: %s :: cluster : %s . CREATING : PARAMS %s" % (chromosome, cluster_name, str(cparams))
+ 
                         cluster.main(   cparams       )
 
                         print "walking chromosome: %s :: cluster : %s . CREATED"  % (chromosome, cluster_name)
@@ -955,6 +958,9 @@ class walker(object):
 
                         cparams = [ '--output', cluster_name, '--indir', self.db_name ]
                         cparams.extend( clusterParams )
+
+                        print "walking chromosome: %s :: cluster : %s . CREATING : PARAMS %s" % ('__global__', cluster_name, str(cparams))
+
                         cluster.main( cparams )
 
                         print "walking chromosome: %s :: cluster : %s . CREATED"  % ('__global__', cluster_name)
@@ -1380,7 +1386,7 @@ def process_matrix( chromosome, bn, chromPath, matrix_name ):
     with open( coord_path, 'r' ) as fhd:
         lines = fhd.read().split("\n")
         coordsNum = int(lines[0])
-        coords    = [ int(x) for x in lines[1].split(',') ]
+        coords    = [ int(x) for x in lines[1].split('|') ]
 
         if coordsNum != len(coords):
             print "length of coords %s differs from number of coords %d" % (coordsNum, len(coords))

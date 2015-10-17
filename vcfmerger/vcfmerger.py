@@ -153,14 +153,14 @@ class vcfResult(object):
     print_every      = 1000
     linelen          =  100
 
-    def __init__(self, simplify=SIMP_NO_SIMPLIFICATION, noncarefiles=[]):
+    def __init__(self, simplify=SIMP_NO_SIMPLIFICATION, noncarefiles=[], translation=None ):
         self.result       = None
         self.chom         = None
         self.pos          = None
         self.chrCount     = None
         self.posCount     = None
         self.simplify     = simplify
-
+        self.translation  = translation
 
         if vcfResult.simpliStats is None:
             vcfResult.simpliStats = {
@@ -183,6 +183,7 @@ class vcfResult(object):
             vcfResult.excludHET        = vcfResult.simplifybits[ int( math.log( SIMP_EXCL_HETEROZYGOUS , 2 ) ) ] # exclude heterozygous
             vcfResult.excludeINDEL     = vcfResult.simplifybits[ int( math.log( SIMP_EXCL_INDEL        , 2 ) ) ] # exclude indels (len > 1)
             vcfResult.excludeSingleton = vcfResult.simplifybits[ int( math.log( SIMP_EXCL_SINGLETON    , 2 ) ) ] # exclude single species SNPs
+
             print "simplifying :: SNP          [%3d, %3d] %s" % ( SIMP_SNP              , math.log(SIMP_SNP               , 2 ), str(vcfResult.simplifySNP     ) )
             print "simplifying :: Heterozygous [%3d, %3d] %s" % ( SIMP_EXCL_HETEROZYGOUS, math.log(SIMP_EXCL_HETEROZYGOUS , 2 ), str(vcfResult.excludHET       ) )
             print "simplifying :: Indel        [%3d, %3d] %s" % ( SIMP_EXCL_INDEL       , math.log(SIMP_EXCL_INDEL        , 2 ), str(vcfResult.excludeINDEL    ) )
@@ -228,8 +229,8 @@ class vcfResult(object):
             for dst in dsts:
                 files = dsts[ dst ]
 
-                if dst.find(',') != -1:
-                    for dstl in dst.split(','):
+                if dst.find('|') != -1:
+                    for dstl in dst.split('|'):
                         if dstl not in simplsrc: simplsrc[dstl] = []
                         simplsrc[dstl].extend(files)
                 else:
@@ -330,8 +331,8 @@ class vcfResult(object):
                 continue
 
             if ( vcfResult.excludeINDEL ):
-                if desti.find(',') != -1: # is heterozygous
-                    destis = desti.split(',')
+                if desti.find('|') != -1: # is heterozygous
+                    destis = desti.split('|')
                     for alt in destis:
                         if len(alt) > 1:
                             vcfResult.simpliStats['Heterozygous Indel'] += 1
@@ -367,7 +368,7 @@ class vcfResult(object):
             files = dsts[ desti ]
 
             if vcfResult.simplifySNP:
-                files.extend( descr.split(',') )
+                files.extend( descr.split('|') )
 
             else:
                 if filedesc in files:
@@ -421,11 +422,16 @@ class vcfResult(object):
                     self.printprogress('2', key='Singleton 2', skip=vcfResult.print_every)
                     continue
 
-                files_str = ",".join( files )
+                files_str = "|".join( files )
                 info_str  = "NV=%d;NW=%d;NS=%d;NT=%d;NU=%d" % ( nv, nw, ns, nt, nu )
 
                 #                      chr  pos         id   ref  alt  qual filter  info      FORMAT filenames
-                restr += "\t".join([ chrom, str(posit), '.', src, dst, '.', 'PASS', info_str, 'FI',  files_str]) + "\n"
+                chrom_name = chrom
+                if self.translation:
+                    if chrom in self.translation:
+                        chrom_name = self.translation[ chrom_name ]
+
+                restr += "\t".join([ chrom_name, str(posit), '.', src, dst, '.', 'PASS', info_str, 'FI',  files_str]) + "\n"
 
         if len(restr) == 0:
             vcfResult.simpliStats['Singleton 3'] += 1
@@ -529,7 +535,7 @@ class vcfFile(object):
 
             elif currLine[0] == "#":
                 if currLine.startswith('##sources='):
-                    self.names = currLine[10:].split(';')
+                    self.names = currLine[10:].split('|')
                     pp(self.names)
 
                 elif currLine.startswith('##numsources='):
@@ -589,7 +595,7 @@ class vcfFile(object):
                                     #print "    gt2", gtinfo[-1]
                                     #print "   adding src to dst", self.register['src'  ], self.register['dst'  ]
 
-                                    self.register['dst'  ] = ",".join(sorted(list(set([self.register['src'  ]] + self.register['dst'  ].split(",")))))
+                                    self.register['dst'  ] = "|".join(sorted(list(set([self.register['src'  ]] + self.register['dst'  ].split("|")))))
                                     #print "   added  src to dst", self.register['dst'  ]
 
                 else:
@@ -639,7 +645,11 @@ class vcfHeap(object):
     Maintain the latest line in all VCF files at the same time
     """
 
-    def __init__(self, simplify=SIMP_NO_SIMPLIFICATION):
+    def __init__(self, simplify=SIMP_NO_SIMPLIFICATION, translation=None):
+        self.translation  = translation
+
+        print "VCF Heap Translation", translation
+
         self.fileNames    = [] #vecString   fileNames;
         self.filehandle   = [] #vecIfstream filehandle;
         self.fileStates   = [] #vecBool     fileStates;
@@ -657,7 +667,7 @@ class vcfHeap(object):
         }
         self.simplify     = simplify
         self.noncarefiles = []
-        self.currResult   = vcfResult( simplify=self.simplify, noncarefiles=self.noncarefiles )
+        self.currResult   = vcfResult( simplify=self.simplify, noncarefiles=self.noncarefiles, translation=translation )
         self.currResult   = None
         print self.ctime
 
@@ -765,7 +775,7 @@ class vcfHeap(object):
         """
         Gets the next position shared by all files
         """
-        self.currResult = vcfResult( )
+        self.currResult = vcfResult( translation=self.translation )
         response        = []
 
         chromCount = 0
@@ -782,10 +792,13 @@ class vcfHeap(object):
                     'count unique': 1,
                     'count total' : 0
                 }
+
                 print "   STARTING CHROMOSOME %s" % self.lastChr
+
             else:
                 has_more_chr = False
                 return None
+
         else:
             self.stats['chroms'][ self.lastChr ][ 'count unique' ] += 1
 
@@ -822,7 +835,7 @@ class vcfHeap(object):
 
                                 self.heapHead[ fileNum ] = self.getRegister( fileNum ) # add to response
                                 heapdata = self.heapHead[ fileNum ]
-                                if heapdata is None              : break
+                                if heapdata       is None        : break
                                 if heapdata.state != FHDOPEN     : break
                                 if heapdata.chrom != self.lastChr: break
                             #print "    heap head pos NOT ok %d" % self.heapHead[ fileNum ].pos
@@ -889,25 +902,38 @@ class vcfHeap(object):
 ##INFO=<ID=NU,Number=1,Type=Integer,Description=\"Number of Species Having Source and Target Nucleotides\">
 ##FORMAT=<ID=FI,Number=1,Type=String,Description=\"Source Files\">
 #CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tFILENAMES
-""" % (self.ctime, ";".join( self.getFileDesc() ), self.getNumFiles() )
+""" % (self.ctime, "|".join( self.getFileDesc() ), self.getNumFiles() )
         return header
 
 
 
-def main(incsv):
-    data       = vcfHeap()
+def main(incsv, translation_str):
     outfile    = incsv + '.vcf.gz'
+
 
     if not os.path.exists( incsv ):
         print "input file does not exists. quitting like a whimp"
         sys.exit( 1 )
+
     print "reading %s" % incsv
+
+
+    translation = {}
+    for pair in translation_str.split(';'):
+        src, dst = pair.split(',')
+        assert src not in translation
+        translation[ src ] = dst
+
+    print "Translation", translation
 
 
     if os.path.exists( outfile ):
         print "output file %s exists. quitting like a whimp" % outfile
         sys.exit( 1 )
+
     print "saving to %s" % outfile
+
+    data       = vcfHeap(translation=translation)
 
     cfh = openfile(incsv, 'r')
     for line in cfh:
@@ -919,6 +945,7 @@ def main(incsv):
             if not os.path.exists( cols[1] ):
                 print "vcf file %s does not exists" % cols[ 1 ]
                 sys.exit( 1 )
+
             else:
                 print "vcf file %s does exists" % cols[ 1 ]
 
@@ -942,6 +969,7 @@ def main(incsv):
     lines = []
     while not data.isempty():
         val = data.next()
+
         if val is not None: # if not empty
             lines.append( str( val ) )
             if len( lines ) == 50000:
@@ -953,6 +981,7 @@ def main(incsv):
             break
 
     mfh.write( "".join( lines ) )
+
     lines = []
 
     mfh.close()
@@ -964,10 +993,11 @@ def main(incsv):
     return outfile
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
+    if len(sys.argv) < 2:
         print "wrong number of arguments. %s <input list>" % sys.argv[0]
         sys.exit(1)
 
-    incsv      = sys.argv[ 1 ]
+    incsv           = sys.argv[ 1 ]
+    translation_str = sys.argv[ 2 ] if len(sys.argv) == 3 else None
 
-    main(incsv)
+    main(incsv, translation_str)

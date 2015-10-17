@@ -34,11 +34,11 @@ def main(args):
     parser.add_argument('-t' , '--thr'   , '--threads'  , dest='threads'  , default=2        , nargs='?'               ,                      type=int,  help='[optional] number of threads. [default: 5]')
     parser.add_argument('-e' , '--ext'   , '--extension', dest='extension', default='.matrix', nargs='?'               ,                      type=str,  help='[optional] extension to search. [default: .matrix]')
 
-    parser.add_argument('-p' , '--nopng' ,                dest='dopng'                       ,                          action='store_false',            help='do not export png')
-    parser.add_argument('-s' , '--nosvg' ,                dest='dosvg'                       ,                          action='store_false',            help='do not export svg')
-    parser.add_argument('-n' , '--notree',                dest='dotree'                      ,                          action='store_false',            help='do not export tree. precludes no png and no svg')
-    parser.add_argument('-r' , '--norows',                dest='dorows'                      ,                          action='store_false',            help='do not export rows')
-    parser.add_argument('-c' , '--nocols',                dest='docols'                      ,                          action='store_false',            help='do not export cols')
+    parser.add_argument('-p' , '--nopng' ,                dest='dopng'    ,                                             action='store_false',            help='do not export png')
+    parser.add_argument('-s' , '--nosvg' ,                dest='dosvg'    ,                                             action='store_false',            help='do not export svg')
+    parser.add_argument('-n' , '--notree',                dest='dotree'   ,                                             action='store_false',            help='do not export tree. precludes no png and no svg')
+    parser.add_argument('-r' , '--norows',                dest='dorows'   ,                                             action='store_false',            help='do not export rows')
+    parser.add_argument('-c' , '--nocols',                dest='docols'   ,                                             action='store_false',            help='do not export cols')
 
     parser.add_argument('infiles'                                                            , nargs=argparse.REMAINDER,                                 help='[optional] input files')
 
@@ -59,7 +59,7 @@ def main(args):
 
     numfiles = len(infiles)
 
-    print options
+    print "Cluster Options", options
 
 
     if numfiles == 0:

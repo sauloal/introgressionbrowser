@@ -5,6 +5,7 @@ import sys
 import string
 
 ignores = ['0/0', './.'] # reference, nocov
+ignores = ['0|0', '0/0', './.'] # reference, nocov
 
 valid_chars = frozenset("_%s%s" % (string.ascii_letters, string.digits))
 def sanitize(name):
@@ -30,6 +31,7 @@ def main():
     defs     = []
     names    = []
     outfiles = []
+    lastCol  = ""
     num_cols = None
     with open(infile) as fhd:
         for line in fhd:
@@ -74,10 +76,16 @@ def main():
                 continue
 
             #print "DATA", line
-            cols   = line.split("\t")
+            cols       = line.split("\t")
             assert len(cols) == num_cols
-            shared = cols[:9] #CHROM    POS     ID      REF     ALT     QUAL    FILTER  INFO    FORMA
-            data   = cols[9:]
+            shared     = cols[:9] #CHROM    POS     ID      REF     ALT     QUAL    FILTER  INFO    FORMA
+            shared_str = "\t".join(shared) + "\t"
+            data       = cols[9:]
+
+            if cols[0] != lastCol:
+                print cols[0]
+                lastCol = cols[0]
+
             #print "shared", shared
             #print "data"  , data
             for pos, ndata in enumerate(data):
@@ -86,7 +94,7 @@ def main():
                     outfiles[pos][3] += 1 # skipped
                     continue
                 outfiles[pos][4] += 1 # valid
-                outfiles[pos][2].write("\t".join(shared) + "\t%s\n" % ndata)
+                outfiles[pos][2].write(shared_str + "\t" + ndata + "\n")
 
     for nop, ndata in enumerate(outfiles):
         ndata[2].close()

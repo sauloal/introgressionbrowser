@@ -131,7 +131,9 @@ def openvcffile(infile, method, **kwargs):
     """
     Open vcf file checking for extension and handling compression
     """
+
     fhd = openfile(infile, method, **kwargs)
+
     if infile.endswith('.vcf.gz'):
         pass
 
@@ -141,6 +143,7 @@ def openvcffile(infile, method, **kwargs):
     else:
         print "unknown file type"
         sys.exit(1)
+    
     return fhd
 
 

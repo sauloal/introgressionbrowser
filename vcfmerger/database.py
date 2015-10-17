@@ -6,6 +6,8 @@ from sqlalchemy.orm             import sessionmaker
 #from sqlalchemy                 import select, create_engine, Column, Integer, String, Float, ForeignKey, PickleType, LargeBinary, Sequence, and_
 from sqlalchemy                 import create_engine, Column, Integer, String, LargeBinary, and_
 
+from HTMLParser import HTMLParser
+htmlparser      = HTMLParser()
 
 Base            = declarative_base()
 chromNameLength = 1024
@@ -96,7 +98,7 @@ class spp_db(Base):
         return "<SPP('*%s', '%d')>" % ( self.spp, self.pos )
 
     def raw(self):
-        return { self.spp: self.pos }
+        return { htmlparser.unescape(self.spp): self.pos }
 
 
 class fasta_db(Base):

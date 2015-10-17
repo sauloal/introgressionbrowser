@@ -155,7 +155,7 @@ var mainController = function ( $scope, $http, mySharedService ) {
             .success(
                 function(data) {
                     console.log('spps %o', data);
-                    $scope.species = data.spps;
+                    $scope.species = list_to_utf(data.spps);
                 }
             );
     };
@@ -281,9 +281,11 @@ var mainController = function ( $scope, $http, mySharedService ) {
 
                 $scope.updateSizes();
 
-                console.log('REQUESTING DATA');
+                console.log('REQUESTING DATA', $scope.databaseQry, $scope.specieQry, $scope.chromosomeQry);
+                //console.log(encodeURIComponent($scope.specieQry), encodeURIComponent(encodeURIComponent($scope.specieQry)));
+                var q = encodeURIComponent(escape(encodeURIComponent(escape($scope.specieQry))));
 
-                $http.get('api/data/'+$scope.databaseQry+'/'+encodeURIComponent(encodeURIComponent($scope.specieQry))+'/'+$scope.chromosomeQry)
+                $http.get('api/data/'+$scope.databaseQry+'/'+q+'/'+$scope.chromosomeQry)
                     .success( $scope.receiveData      )
                     .error(   $scope.receiveDataError );
 
@@ -2588,7 +2590,16 @@ var mainController = function ( $scope, $http, mySharedService ) {
 };
 
 
+function numeric_to_unicode(s) {
+	return s.replace(/&#(\d+);/g, function (m, n) { return String.fromCharCode(n); });
+}
 
+function list_to_utf(lst) {
+	return lst;
+	var l = $.map( lst, numeric_to_unicode );
+	//console.log('list_to_utf', lst, l);
+	return l;
+}
 
 
 
@@ -2818,7 +2829,7 @@ function loadReport(data) {
     var gene    = data['gene'   ];
     var chrom   = data['chrom'  ];
 
-    var spps    = data['spps'   ];
+    var spps    = list_to_utf(data['spps'   ]);
     var matrix  = data['LINE'   ];
 
     var treeStr = data['TREE'   ].newick;

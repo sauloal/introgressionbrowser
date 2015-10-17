@@ -443,7 +443,7 @@ def readParsel(reportName, idx, infile, chrom):
 
         posi    = int(cols[1])
         info    = cols[7]
-        spps    = cols[9].split(',')
+        spps    = cols[9].split('|')
         infoDic = {}
 
         for cel in info.split(";"):

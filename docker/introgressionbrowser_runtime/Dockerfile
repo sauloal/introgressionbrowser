@@ -1,11 +1,13 @@
 #docker build --rm -t sauloal/introgressionbrowser_runtime .
 
-FROM ubuntu:14.10
+FROM ubuntu:14.04.3
 
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN sed -i 's/http:\/\/archive.ubuntu.com\/ubuntu\//mirror:\/\/mirrors.ubuntu.com\/mirrors.txt/' /etc/apt/sources.list &&\
-    apt-get clean all && apt-get update && apt-get -y upgrade                      && \
+RUN bash -c "echo -e 'deb mirror://mirrors.ubuntu.com/mirrors.txt trusty main restricted universe multiverse\ndeb mirror://mirrors.ubuntu.com/mirrors.txt trusty-updates main restricted universe multiverse\ndeb mirror://mirrors.ubuntu.com/mirrors.txt trusty-backports main restricted universe multiverse\ndeb mirror://mirrors.ubuntu.com/mirrors.txt trusty-security main restricted universe multiverse' > /etc/apt/sources.list" && \
+    apt-get clean all  && \
+    apt-get update     && \
+    apt-get -y upgrade && \
     apt-get install -y -f libapache2-mod-wsgi apache2 nano build-essential            \
             checkinstall openssl sqlite3 libsqlite3-dev git nano                      \
             libfreetype6 libfreetype6-dev zlib1g-dev libjpeg62 libjpeg62-dev          \
@@ -15,7 +17,7 @@ RUN sed -i 's/http:\/\/archive.ubuntu.com\/ubuntu\//mirror:\/\/mirrors.ubuntu.co
             python-numpy pylint                                                    && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*                 && \
     a2enmod wsgi && a2enmod proxy && a2enmod proxy_http && a2enmod rewrite         && \
-    mkdir -p /etc/apache2/mods-available/  
+    mkdir -p /etc/apache2/mods-available/
 
 ADD requirements.txt /requirements.txt
 

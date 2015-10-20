@@ -33,6 +33,7 @@ from behaviour import *
 
 
 def init( args ):
+    print "initing. args:", args
     load_config( args )
 
 def start():

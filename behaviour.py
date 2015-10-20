@@ -224,7 +224,7 @@ def create_self_signed_cert(cert_dir=".", cert_name="server", key_size=DEFAULT_S
 #ENCRYPTION_INST           = None
 def load_config( args ):
     if len(args) == 0:
-        print "no config file or command given"
+        print "no config file or command given", args
         sys.exit(1)
 
     variables = {

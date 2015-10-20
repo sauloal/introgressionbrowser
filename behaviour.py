@@ -108,15 +108,10 @@ class encryption(object):
                 print "ssl key % exists. deleting" % self.rsa_public_key_file_name2
                 os.remove(self.rsa_public_key_file_name2)
 
-            if ( os.path.exists( self.rsa_public_key_file_name3 ) ):
-                print "ssl key % exists. deleting" % self.rsa_public_key_file_name3
-                os.remove(self.rsa_public_key_file_name3)
-
             print "PUBLIC KEY %s OR PRIVATE KEY %s DOES NOT EXISTS. CREATING" % (self.rsa_private_key_file_name, self.rsa_public_key_file_name2)
             #(pubkey, privkey) = rsa.newkeys(RSA_KEY_SIZE, accurate=True, poolsize=1)
             #open(rsa_public_key_file_name , 'w').write( pubkey.save_pkcs1()  )
             #open(rsa_private_key_file_name, 'w').write( privkey.save_pkcs1() )
-
 
             self.privkey = RSA.generate(self.RSA_KEY_SIZE)
             self.pubkey  = self.privkey.publickey()
@@ -127,8 +122,8 @@ class encryption(object):
             print "saved public and private keys"
 
 
-        if os.path.exists(self.rsa_public_key_file_name3):
-            print "temporary rsa pub key %s exists. deleting" % ( self.rsa_public_key_file_name3 )
+        if ( os.path.exists( self.rsa_public_key_file_name3 ) ):
+            print "ssl key % exists. deleting" % self.rsa_public_key_file_name3
             os.remove(self.rsa_public_key_file_name3)
 
 
@@ -230,6 +225,7 @@ def load_config( args ):
     variables = {
         'HAS_LOGIN'                 : False,
         'USE_SSL'                   : False,
+        'USE_ENCRYPTION'            : False,
         'SSL_KEY_LENGTH'            : DEFAULT_SSL_KEY_SIZE,
         'SERVER_PORT'               : DEFAULT_SERVER_PORT,
         'SERVER_IP'                 : DEFAULT_SERVER_IP,
@@ -296,7 +292,8 @@ def load_config( args ):
     variables['getManager'] = getManager
     variables['INTERFACE' ] = interface
 
-    app.before_first_request(init_db)
+    #app.before_first_request(init_db)
+    #init_db()
 
     app.secret_key                   = variables['SECRET_KEY']
     app.debug                        = variables['DEBUG'     ]
@@ -308,34 +305,6 @@ def load_config( args ):
 
 
     interface.DEBUG = IDEBUG
-
-    if app.config['HAS_LOGIN']:
-        print "LOGIN ENABLED"
-        print "INITIALIZING DB"
-
-        USER_DATABASE_FILE = os.path.join( INFOLDER, 'users.sqlite' )
-
-        app.config['USER_DATABASE_FILE'     ] = USER_DATABASE_FILE
-        app.config['DATABASE_FILE'          ] = USER_DATABASE_FILE
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + app.config['DATABASE_FILE']
-        app.config['SQLALCHEMY_ECHO'        ] = False
-
-        if not os.path.exists(USER_DATABASE_FILE):
-            user_db.drop_all()
-            user_db.create_all()
-
-
-
-    print "INITIALIZING ENCRYPTION"
-
-    app.config["ENCRYPTION_INST"] = encryption( INFOLDER, app.config )
-
-    print "ENCRYPTION KEY SIZE", app.config["ENCRYPTION_INST"].RSA_KEY_SIZE
-    #jsonpickle.set_preferred_backend('simplejson')
-    #jsonpickle.set_encoder_options('simplejson', ensure_ascii=True, sort_keys=True, indent=1)
-
-    app.jinja_env.globals['encbitsize'              ] = str( app.config["ENCRYPTION_INST"].RSA_KEY_SIZE             )
-    app.jinja_env.globals['rsa_public_key_file_name'] = str( app.config["ENCRYPTION_INST"].rsa_public_key_file_name )
 
     #http://stackoverflow.com/questions/9767585/insert-static-files-literally-into-jinja-templates-without-parsing-them
     def include_file(name):
@@ -352,6 +321,37 @@ def load_config( args ):
     app.jinja_env.globals['include_file'          ] = include_file
     app.jinja_env.globals['include_file_multiline'] = include_file_multiline
 
+
+    if app.config['HAS_LOGIN']:
+        print "LOGIN ENABLED"
+        print "INITIALIZING DB"
+
+        USER_DATABASE_FILE = os.path.join( INFOLDER, 'users.sql' )
+
+        app.config['USER_DATABASE_FILE'     ] = USER_DATABASE_FILE
+        app.config['DATABASE_FILE'          ] = USER_DATABASE_FILE
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + app.config['DATABASE_FILE']
+        app.config['SQLALCHEMY_ECHO'        ] = False
+
+        if not os.path.exists(USER_DATABASE_FILE):
+            print "DATABASE %s DOES NOT EXISTS. CREATING" % USER_DATABASE_FILE
+            user_db.drop_all()
+            user_db.create_all()
+            os.chmod(USER_DATABASE_FILE, 0666)
+
+
+
+        if app.config['USE_ENCRYPTION']:
+            print "INITIALIZING ENCRYPTION"
+
+            app.config["ENCRYPTION_INST"] = encryption( INFOLDER, app.config )
+
+            print "ENCRYPTION KEY SIZE", app.config["ENCRYPTION_INST"].RSA_KEY_SIZE
+            #jsonpickle.set_preferred_backend('simplejson')
+            #jsonpickle.set_encoder_options('simplejson', ensure_ascii=True, sort_keys=True, indent=1)
+
+            app.jinja_env.globals['encbitsize'              ] = str( app.config["ENCRYPTION_INST"].RSA_KEY_SIZE             )
+            app.jinja_env.globals['rsa_public_key_file_name'] = str( app.config["ENCRYPTION_INST"].rsa_public_key_file_name )
 
 
     if app.config['USE_SSL']:
@@ -411,9 +411,9 @@ def run_action(args):
 
         if app.config['HAS_LOGIN']:
             if app.config["ENCRYPTION_INST"] is not None:
-                files_to_del.extend( 
-                    [ 
-                        app.config["ENCRYPTION_INST"].rsa_private_key_file_name, 
+                files_to_del.extend(
+                    [
+                        app.config["ENCRYPTION_INST"].rsa_private_key_file_name,
                         app.config["ENCRYPTION_INST"].rsa_public_key_file_name ,
                         app.config["ENCRYPTION_INST"].rsa_public_key_file_name2,
                         app.config["ENCRYPTION_INST"].rsa_public_key_file_name3
@@ -421,11 +421,11 @@ def run_action(args):
                 )
 
         if app.config['USE_SSL']:
-            files_to_del.extend( 
-                [ 
+            files_to_del.extend(
+                [
                     app.config["SSL_CERT"       ]                          ,
                     app.config["SSL_KEY"        ]
-                ] 
+                ]
             )
 
         for filename in files_to_del:

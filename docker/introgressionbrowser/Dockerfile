@@ -1,9 +1,10 @@
-#docker run -it --rm -v $PWD/data:/var/www/ibrowser/data -v $PWD/access.log:/var/log/apache2/access.log -v $PWD/error.log:/var/log/apache2/error.log sauloal/introgressionbrowser
+#BUILD: docker build --rm -t sauloal/introgressionbrowser .
+#RUN  : docker stop ibrowser; docker rm ibrowser; docker run --detach=true --name ibrowser --publish=10000:10000 --volume $PWD/data:/var/www/ibrowser/data sauloal/introgressionbrowser
+#START: docker start ibrowser
+#LOGS : docker logs ibrowser
 #
 #--security-context apparmor:unconfine 
 # --security-context 
-#
-#docker build --rm -t sauloal/introgressionbrowser .
 
 FROM sauloal/introgressionbrowser_runtime
 

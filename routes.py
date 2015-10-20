@@ -81,18 +81,19 @@ def login():
     """
     Perform login
     """
-    #print "login"
+    print "login"
     message = ""
     if app.config['HAS_LOGIN']:
-        #print "login: has config"
+        print "login: has config"
         if request.method == 'POST':
             #print "login: has config - POST"
             username = request.form.get('username', None)
             password = request.form.get('password', None)
             noonce   = request.form.get('noonce'  , None)
 
-            if password is not None:
-                password = app.config["ENCRYPTION_INST"].decrypter( password )
+            if app.config['USE_ENCRYPTION']:
+                if password is not None:
+                    password = app.config["ENCRYPTION_INST"].decrypter( password )
 
             print "login: has config - POST - username %s password %s noonce %s" % ( username, password, noonce )
 
@@ -117,10 +118,11 @@ def login():
 
         session["noonce"] = gen_noonce()
         print "new noonce", session["noonce"]
-        return render_template('login.html', noonce=session["noonce"], message=message)
+        return render_template('login.html', noonce=session["noonce"], message=message, app=app)
         #return app.send_static_file('login.html')
 
     else:
+        print "login: no config"
         return redirect(url_for('get_main', _external=True))
 
 
@@ -131,7 +133,7 @@ def admin():
     """
 
     message = None
-    #print "login"
+    print "admin"
     if app.config['HAS_LOGIN']:
         if request.method == 'POST':
             print "admin: has config - POST"
@@ -141,8 +143,9 @@ def admin():
             noonce   = request.form.get('noonce'  , None)
             security = request.form.get('security', None)
 
-            if password is not None:
-                password = app.config["ENCRYPTION_INST"].decrypter( password )
+            if app.config['USE_ENCRYPTION']:
+                if password is not None:
+                    password = app.config["ENCRYPTION_INST"].decrypter( password )
 
             print "admin: has config - POST - action %s username %s password %s noonce %s security %s" % tuple([ str(x) for x in ( action, username, password, noonce, security ) ])
 
@@ -189,10 +192,11 @@ def admin():
 
         session["noonce"] = gen_noonce()
         print "new noonce", session["noonce"]
-        return render_template('admin.html', users=[x for x in sorted(get_users()) if x != "admin"], message=message, noonce=session["noonce"])
+        return render_template('admin.html', users=[x for x in sorted(get_users()) if x != "admin"], message=message, noonce=session["noonce"], app=app)
         #return app.send_static_file('login.html')
 
     else:
+        print "admin: no config"
         return redirect(url_for('get_main', _external=True))
 
 
@@ -1329,7 +1333,9 @@ def load_database():
     files.extend( glob.glob( os.path.join( app.config["INFOLDER"], '*.sqlite'   ) ) )
     #print "GLOBBED", files
     files.sort()
-    app.config["DATABASES"  ] = []
+
+    if "DATABASES" not in app.config:
+        app.config["DATABASES"  ] = []
 
     for db_name in files:
         db_nfo       = db_name + ".nfo"
@@ -1362,6 +1368,7 @@ def load_database():
 
     print app.config["DATABASES"  ]
 
+    init_db()
 
 
 def read_nfo( db_title, db_nfo, path='.' ):

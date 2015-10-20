@@ -92,7 +92,6 @@ window.onload = function () {
         console.log("noonce     : ", noonce);
 
 
-
         var up         = username + password + salt;
         console.log("up         : ", up);
 
@@ -105,7 +104,11 @@ window.onload = function () {
 
         //document.getElementById('password').value = res;
 
-        document.getElementById('password').value = encrypter.encrypt( res );
+{% if app.config['USE_ENCRYPTION'] %}
+        res = encrypter.encrypt( res );
+{% endif %}
+
+        document.getElementById('password').value = res;
 
         document.getElementById('form').submit();
         return false;
@@ -115,7 +118,9 @@ window.onload = function () {
   };
 };
         </script>
+{% include 'hasher.html' without context %}
+{% if app.config['USE_ENCRYPTION'] %}
 {% include 'crypto.html' without context %}
-
+{% endif %}
     </footer>
 </html>

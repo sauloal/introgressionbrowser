@@ -1,16 +1,4 @@
         <script type="text/javascript">
-{{ include_file('sha3.js') }}
-        </script>
-
-	<script type="text/javascript">
-		var hasher = function (seq) {
-			return CryptoJS.SHA3(seq, { outputLength: 512 }).toString(CryptoJS.enc.Hex);
-		}
-		//CryptoJS.SHA384(up).toString(CryptoJS.enc.Hex)
-		//CryptoJS.SHA512(up).toString(CryptoJS.enc.Hex)
-	</script>
-
-        <script type="text/javascript">
 {{ include_file('jsencrypt.min.js' ) }}
         </script>
 
@@ -23,5 +11,3 @@
             var encrypted  = encrypter.encrypt( "test" );
             console.log( "encrypted ", encrypted );
         </script>
-
-<!--{- include 'decrypto.html' -}-->

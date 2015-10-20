@@ -256,7 +256,8 @@ def kill_others():
     if os.path.exists(self_pid):
         pid = open(self_pid).read().strip()
         sys.stdout.write("killing self. PID: %d\n" % int(pid))
-        subprocess.Popen(['kill', '-9', pid])
+        proc = subprocess.Popen(['kill', '-9', pid])
+        proc.wait()
         sys.stdout.write("killed self\n")
         os.remove(self_pid)
         sys.stdout.write("removed pid file\n")

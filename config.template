@@ -1,5 +1,8 @@
 #decide whether to have user control or not
-HAS_LOGIN    = False
+HAS_LOGIN      = False
+
+#decide whether to use encryption on forms
+USE_ENCRYPTION = False
 
 #decide whether to have ssl or not
 USE_SSL        = False

@@ -115,31 +115,34 @@
   function add_user() {
     console.log( "adding user" );
     var username  = document.getElementById('username' ).value;
-    var password  = document.getElementById('password1').value;
+    var password1 = document.getElementById('password1').value;
     var password2 = document.getElementById('password2').value;
     var noonce    = document.getElementById('noonce'   ).value;
 
     console.log( "adding user :: login    : ", username  );
-    console.log( "adding user :: password1: ", password  );
+    console.log( "adding user :: password1: ", password1 );
     console.log( "adding user :: password2: ", password2 );
     console.log( "adding user :: noonce   : ", noonce    );
 
-    if ( password != password2 ) {
+    if ( password1 != password2 ) {
         document.getElementById("message").innerHTML = "Passwords do not match";
         return;
     }
 
-    var up         = username + password + noonce;
+    var form = document.createElement("form");
+    form.setAttribute("method", "POST"  );
+    form.setAttribute("action", "/admin");
+
+    var up         = username + password1 + noonce;
     //console.log("up         : ", up);
 
     var cryptPass  = hasher(up              );
     var security   = hasher(cryptPass+noonce);
 
+    {% if app.config['USE_ENCRYPTION'] %}
+        cryptPass = encrypter.encrypt( cryptPass );
+    {% endif %}
     //console.log("cryptPass  : ", cryptPass);
-
-    var form = document.createElement("form");
-    form.setAttribute("method", "POST"  );
-    form.setAttribute("action", "/admin");
 
     var action_field = document.createElement("input");
     action_field.setAttribute("type" , "hidden"  );
@@ -156,7 +159,7 @@
     var pass_field = document.createElement("input");
     pass_field.setAttribute("type" , "hidden"  );
     pass_field.setAttribute("name" , "password");
-    pass_field.setAttribute("value", encrypter.encrypt( cryptPass ));
+    pass_field.setAttribute("value", cryptPass );
     form.appendChild(pass_field);
 
     var noonce_field = document.createElement("input");
@@ -173,6 +176,7 @@
 
     document.body.appendChild(form);
     form.submit();
+
     //document.removeChild(form);
   }
 
@@ -214,7 +218,9 @@
 //  }
 //}
         </script>
-
+{% include 'hasher.html' without context %}
+{% if app.config['USE_ENCRYPTION'] %}
 {% include 'crypto.html' without context %}
+{% endif %}
     </footer>
 </html>

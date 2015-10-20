@@ -35,8 +35,8 @@ deb http://'$AMAZON'.clouds.archive.ubuntu.com/ubuntu/ trusty-security main rest
     cat /etc/apt/sources.list            && \
     printenv | sort                      && \
     rm /var/lib/apt/lists/* -rvf         && \
-    mkdir -p /var/lib/apt/lists/partial  && \
-    chmod 755 /var/lib/apt/lists/partial && \
+    rm -f /var/cache/apt/* -rfv          && \
+    echo "Acquire::http {No-Cache=True;};"  > /etc/apt/apt.conf.d/no-cache && \
     apt-get update                       && \
     apt-get -y upgrade                   && \
     apt-get install -y -f libapache2-mod-wsgi apache2 nano build-essential            \
@@ -51,8 +51,6 @@ deb http://'$AMAZON'.clouds.archive.ubuntu.com/ubuntu/ trusty-security main rest
     mkdir -p /etc/apache2/mods-available/
 
 #    apt-get clean all  && \
-
-ADD requirements.txt /requirements.txt
-
-RUN pip install --requirement /requirements.txt
+#    mkdir -p /var/lib/apt/lists/partial  && \
+#    chmod 755 /var/lib/apt/lists/partial && \
 

@@ -10,6 +10,8 @@ FROM sauloal/introgressionbrowser_runtime
 
 RUN cd /var/www && git clone https://github.com/sauloal/introgressionbrowser.git ibrowser && ls ibrowser
 
+RUN cd /var/www/ibrowser && pip install --requirement requirements.txt
+
 VOLUME /var/www/ibrowser/data
 #VOLUME /var/log/apache2/access.log
 #VOLUME /var/log/apache2/error.log

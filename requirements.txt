@@ -4,6 +4,7 @@ sqlalchemy
 Flask-SQLAlchemy
 pysha3
 pycrypto
+pyinotify
 
 ##preferably install system wide
 #apt-get install -y python-setuptools python-dev python-numpy python-scipy python-matplotlib python-pandas python-sympy python-pip python-imaging

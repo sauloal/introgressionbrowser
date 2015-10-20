@@ -281,6 +281,9 @@ if __name__ == '__main__':
     notifier     = pyinotify.Notifier(wm, default_proc_fun=handler)
     wm.add_watch(data_path, pyinotify.ALL_EVENTS)
 
+    if auto:
+        handler._plusone()
+
     #on_loop_func = functools.partial(on_loop)
 
     # Notifier instance spawns a new process when daemonize is set to True. This

@@ -2,19 +2,12 @@
 #--security-context apparmor:unconfine 
 #docker build --rm -t sauloal/introgressionbrowser_apache_static .
 
-FROM sauloal/introgressionbrowser_runtime
-
-ENV DEBIAN_FRONTEND noninteractive
+FROM sauloal/introgressionbrowser
 
 RUN mkdir -p /etc/apache2/mods-available/ && \
-    mkdir -p /var/www/ibrowser            && \
-    ln -s /var/www/ibrowser/static/       /var/www/html/static
+    ln -s /var/www/ibrowser/static/       /var/www/html/static && \
+    ln -s /var/www/ibrowser/ibrowser.conf /etc/apache2/mods-enabled/ibrowser.conf
 
 #    sed -ie "s/Listen 80/Listen 8000/" /etc/apache2/ports.conf                     && \
 
-ADD ibrowser.conf /etc/apache2/mods-enabled/ibrowser.conf
 
-WORKDIR /var/www/ibrowser
-
-VOLUME [ "/var/www/ibrowser"      ]
-VOLUME [ "/var/www/ibrowser/data" ]

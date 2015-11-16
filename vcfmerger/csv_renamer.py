@@ -7,27 +7,23 @@ import re
 import unicodedata
 from unidecode import unidecode
 
-def main():
-    try:
-        inlst  = sys.argv[1]
-        intbl  = sys.argv[2]
-        tbl_k  = sys.argv[3]
-        tbl_vs = sys.argv[4].split(',')
+"""
+EX1=vcfmerger/csv_list_multicolumn.py
+EX2=vcfmerger/csv_renamer.py
+VCF=1001genomes_snp-short-indel_only_ACGTN.vcf.gz
+LST=A_thaliana_master_accession_list_1135_20151008.csv
 
-    except:
-        print "<inlist> <in table> <column key name> <column val names>"
-        sys.exit(1)
+${EX1} ${VCF}
+${EX2} ${VCF}.list.csv ${LST} tg_ecotypeid name,othername,CS_number
+"""
 
-    print "input list             %s" % inlst
-    print "input table            %s" % intbl
-    print "table column key name  %s" % tbl_k
-    print "table column val names %s" % tbl_vs
-
+def get_translation(intbl, tbl_k, tbl_vs):
     data      = {}
     atad      = {}
     col_names = None
     tbl_k_id  = None
     tbl_v_ids = None
+
     with open(intbl, 'rb') as fhd:
         reader = csv.reader(fhd, delimiter=',', quotechar='"')
         for ln, cols in enumerate(reader):
@@ -77,6 +73,27 @@ def main():
 
                 data[k] = v
                 atad[v] = k
+
+    return data, atad
+
+
+def main():
+    try:
+        inlst  = sys.argv[1]
+        intbl  = sys.argv[2]
+        tbl_k  = sys.argv[3]
+        tbl_vs = sys.argv[4].split(',')
+
+    except:
+        print "<inlist> <in table> <column key name> <column val names>"
+        sys.exit(1)
+
+    print "input list             %s" % inlst
+    print "input table            %s" % intbl
+    print "table column key name  %s" % tbl_k
+    print "table column val names %s" % tbl_vs
+
+    data, atad = get_translation(intbl, tbl_k, tbl_vs)
 
     print "data"
     for k,v in data.iteritems():

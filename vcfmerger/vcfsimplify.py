@@ -19,11 +19,12 @@ import vcfmerger
 
 def main(args):
     parser  = argparse.ArgumentParser(description='Simplify merged VCF file.')
-    parser.add_argument('-i', '--input'            , dest='input'              , default=None,                       help='Input file'                       )
-    parser.add_argument('-o', '--output'           , dest='output'             , default=None,                       help='Output file'                      )
-    parser.add_argument('-H', '--include-hetero'   , dest='do_hetero_filter'   , default=True, action='store_false', help='Do not simplify heterozygous SNPS')
-    parser.add_argument('-I', '--include-indel'    , dest='do_indel_filter'    , default=True, action='store_false', help='Do not simplify indel SNPS'       )
-    parser.add_argument('-S', '--include-singleton', dest='do_singleton_filter', default=True, action='store_false', help='Do not simplify single SNPS'      )
+    parser.add_argument('-i', '--input'            , dest='input'              , default=None,                       help='Input file'                          )
+    parser.add_argument('-o', '--output'           , dest='output'             , default=None,                       help='Output file'                         )
+    parser.add_argument('-H', '--include-hetero'   , dest='do_hetero_filter'   , default=True, action='store_false', help='Do not simplify heterozygous SNPS'   )
+    parser.add_argument('-O', '--include-homo'     , dest='do_homo_filter'     , default=True, action='store_false', help='Do not simplify homozygous positions')
+    parser.add_argument('-I', '--include-indel'    , dest='do_indel_filter'    , default=True, action='store_false', help='Do not simplify indel SNPS'          )
+    parser.add_argument('-S', '--include-singleton', dest='do_singleton_filter', default=True, action='store_false', help='Do not simplify single SNPS'         )
 
     options = parser.parse_args(args)
 
@@ -42,9 +43,14 @@ def main(args):
 
     outfile    = invcf + '.simplified'
     dataFilter = vcfmerger.SIMP_SNP
+    
     if options.do_hetero_filter:
         dataFilter += vcfmerger.SIMP_EXCL_HETEROZYGOUS
         outfile    += '.hetero'
+        
+    if options.do_homo_filter:
+        dataFilter += vcfmerger.SIMP_EXCL_HOMOZYGOUS
+        outfile    += '.homo'
 
     if options.do_indel_filter:
         dataFilter += vcfmerger.SIMP_EXCL_INDEL

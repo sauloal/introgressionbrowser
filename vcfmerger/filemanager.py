@@ -109,6 +109,10 @@ def checkfile(infile):
         print "input file %s does not exists" % infile
         sys.exit(1)
 
+    if os.path.isdir( infile ):
+        print "input file %s is a folder" % infile
+        sys.exit(1)
+    
     return infile
 
 

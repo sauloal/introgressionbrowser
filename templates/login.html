@@ -72,7 +72,7 @@ window.onload = function () {
     var username = document.getElementById('username').value;
     //console.log("username   : ", username);
 
-    get_json( "/salt/"+username, function(data) {
+    get_json( "salt/"+username, function(data) {
         console.log("salt ", data);
 
         var salt     = data.salt;

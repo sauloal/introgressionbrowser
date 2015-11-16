@@ -19,7 +19,8 @@ from filemanager import loads_data
 
 def getsession(db_file, echo=False):
     print "CREATING SESSSION"
-    engine    = create_engine('sqlite:///'+db_file, echo=echo )
+    #http://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-xvii-deployment-on-linux-even-on-the-raspberry-pi
+    engine    = create_engine('sqlite:///'+db_file + '?check_same_thread=False', echo=echo )
     Session   = sessionmaker(bind=engine)
     session   = Session()
     session._model_changes = {}

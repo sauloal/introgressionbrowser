@@ -1,11 +1,24 @@
 #!/usr/bin/python
 
+#ulimit -n 4000
+
 import os
 import sys
 import string
+from filemanager import checkfile, openfile
 
 ignores = ['0/0', './.'] # reference, nocov
 ignores = ['0|0', '0/0', './.'] # reference, nocov
+
+"""
+EX1=vcfmerger/split_multicolumn_vcf.py
+EX2=vcfmerger/csv_renamer.py
+VCF=1001genomes_snp-short-indel_only_ACGTN.vcf.gz
+LST=A_thaliana_master_accession_list_1135_20151008.csv
+
+${EX1} ${VCF}
+${EX2} ${VCF}.lst ${LST} tg_ecotypeid name,othername,CS_number
+"""
 
 valid_chars = frozenset("_%s%s" % (string.ascii_letters, string.digits))
 def sanitize(name):
@@ -19,21 +32,18 @@ def main():
         print sys.argv[0], "<INPUT MULTICOLUMN CSV>"
         sys.exit(1)
 
-    if not os.path.exists( infile ):
-        print "input file %s does not exists" % infile
-        sys.exit(1)
-
-    if os.path.isdir( infile ):
-        print "input file %s is a folder" % infile
-        sys.exit(1)
+    checkfile(infile)
 
     print "splitting %s" % infile
-    defs     = []
-    names    = []
-    outfiles = []
-    lastCol  = ""
-    num_cols = None
-    with open(infile) as fhd:
+    defs       = []
+    names      = []
+    outfiles   = []
+    valid      = 0
+    skipped    = 0
+    lastCol    = ""
+    num_cols   = None
+    line_count = 0
+    with openfile(infile, 'r') as fhd:
         for line in fhd:
             line = line.strip()
 
@@ -41,26 +51,29 @@ def main():
                 continue
 
             if line.startswith("#"): # header
-                #print "HEADER", line
+                print "HEADER", line
 
                 if line.startswith("##"): # definition lines
-                    #print "HEADER :: DEF", line
+                    print "HEADER :: DEF", line
                     defs.append( line )
 
                 else: # column description
-                    #print "HEADER :: COL", line
+                    print "HEADER :: COL", line
+
                     cols     = line.split("\t")
                     num_cols = len(cols)
                     shared   = cols[:9] #CHROM    POS     ID      REF     ALT     QUAL    FILTER  INFO    FORMA
                     names    = cols[9:]
-                    #print "HEADER :: COL :: SHARED", shared
-                    #print "HEADER :: COL :: NAMES" , names
+
+                    print "HEADER :: COL :: SHARED", shared
+                    print "HEADER :: COL :: NAMES" , names
+
                     outfiles = [None]*len(names)
                     outlist  = open("%s.lst" % infile, 'w')
                     for np, name in enumerate(names):
-                        nof = ("%s_%0"+str(len("%d"%len(names)))+"d_%s.vcf") % (infile, np+1, sanitize(name))
+                        nof = ("%s_%0"+str(len("%d"%len(names)))+"d_%s.vcf.gz") % (infile, np+1, sanitize(name))
                         print ("creating %"+str(len("%d"%len(names)))+"d %-"+str(max([len(x) for x in names]))+"s to %s") % (np+1, name, nof)
-                        nop = open( nof, 'w' )
+                        nop = openfile( nof, 'w' )
 
                         #                               skipped valid
                         outfiles[np] = [name, nof, nop, 0     , 0]
@@ -75,6 +88,17 @@ def main():
 
                 continue
 
+            line_count += 1
+
+            if line_count % 1000 == 0:
+                sys.stdout.write('.')
+                if line_count % 100000 == 0:
+                    sys.stdout.write(' lines %12d valid %12d skipped %12d\n' % (line_count, valid, skipped) )
+                    for nop, ndata in enumerate(outfiles):
+                        ndata[2].flush()
+                sys.stdout.flush()
+
+
             #print "DATA", line
             cols       = line.split("\t")
             assert len(cols) == num_cols
@@ -83,7 +107,7 @@ def main():
             data       = cols[9:]
 
             if cols[0] != lastCol:
-                print cols[0]
+                print '\nChromosome', cols[0]
                 lastCol = cols[0]
 
             #print "shared", shared
@@ -91,8 +115,11 @@ def main():
             for pos, ndata in enumerate(data):
                 #outfiles[np] = [name, nof, 0, 0, nop]
                 if any([ndata.startswith(x) for x in ignores]):
+                    skipped          += 1
                     outfiles[pos][3] += 1 # skipped
                     continue
+
+                valid            += 1
                 outfiles[pos][4] += 1 # valid
                 outfiles[pos][2].write(shared_str + "\t" + ndata + "\n")
 

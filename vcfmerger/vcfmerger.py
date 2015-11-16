@@ -14,6 +14,8 @@ from pprint import pprint as pp
 sys.path.insert(0, '.')
 from filemanager import getFh,openvcffile,openfile,checkfile,makeIndexFile,readIndex
 
+#ulimit -n 4096
+
 #try:
 #    sys.path.insert(0, 'aux/pypy-2.0/pypy-2.0-beta2/pypy-pypy-4b60269153b5/')
 #    from rpython.rlib.jit import JitDriver, purefunction
@@ -104,8 +106,9 @@ Constants
 SIMP_NO_SIMPLIFICATION =    0 # no simplification
 SIMP_SNP               = 2**1 # simplify SNPs
 SIMP_EXCL_HETEROZYGOUS = 2**2 # exclude heterozygous
-SIMP_EXCL_INDEL        = 2**3 # exclude indels
-SIMP_EXCL_SINGLETON    = 2**4 # exclude singletons
+SIMP_EXCL_HOMOZYGOUS   = 2**3 # exclude homozygous
+SIMP_EXCL_INDEL        = 2**4 # exclude indels
+SIMP_EXCL_SINGLETON    = 2**5 # exclude singletons
 
 
 def getBits(val):
@@ -143,6 +146,7 @@ class vcfResult(object):
     simplifybits     = None
     simplifySNP      = None
     excludeHET       = None
+    excludeHOMO      = None
     excludeINDEL     = None
     excludeSingleton = None
     noncarefiles     = None
@@ -166,7 +170,7 @@ class vcfResult(object):
             vcfResult.simpliStats = {
                 'Heterozygous Dest' : 0,
                 'Heterozygous Indel': 0,
-                'Homozygous Indel'  : 0,
+                'Homozygous'        : 0,
                 'Source Indel'      : 0,
                 'Singleton 1'       : 0,
                 'Singleton 2'       : 0,
@@ -181,17 +185,20 @@ class vcfResult(object):
             #print "simplifying :: simplify bits  ", self.simplifybits
             vcfResult.simplifySNP      = vcfResult.simplifybits[ int( math.log( SIMP_SNP               , 2 ) ) ] # simplify SNP
             vcfResult.excludHET        = vcfResult.simplifybits[ int( math.log( SIMP_EXCL_HETEROZYGOUS , 2 ) ) ] # exclude heterozygous
+            vcfResult.excludHOMO       = vcfResult.simplifybits[ int( math.log( SIMP_EXCL_HOMOZYGOUS   , 2 ) ) ] # exclude homozygous
             vcfResult.excludeINDEL     = vcfResult.simplifybits[ int( math.log( SIMP_EXCL_INDEL        , 2 ) ) ] # exclude indels (len > 1)
             vcfResult.excludeSingleton = vcfResult.simplifybits[ int( math.log( SIMP_EXCL_SINGLETON    , 2 ) ) ] # exclude single species SNPs
 
             print "simplifying :: SNP          [%3d, %3d] %s" % ( SIMP_SNP              , math.log(SIMP_SNP               , 2 ), str(vcfResult.simplifySNP     ) )
             print "simplifying :: Heterozygous [%3d, %3d] %s" % ( SIMP_EXCL_HETEROZYGOUS, math.log(SIMP_EXCL_HETEROZYGOUS , 2 ), str(vcfResult.excludHET       ) )
+            print "simplifying :: Homozygous   [%3d, %3d] %s" % ( SIMP_EXCL_HOMOZYGOUS  , math.log(SIMP_EXCL_HOMOZYGOUS   , 2 ), str(vcfResult.excludHOMO      ) )
             print "simplifying :: Indel        [%3d, %3d] %s" % ( SIMP_EXCL_INDEL       , math.log(SIMP_EXCL_INDEL        , 2 ), str(vcfResult.excludeINDEL    ) )
             print "simplifying :: Singleton    [%3d, %3d] %s" % ( SIMP_EXCL_SINGLETON   , math.log(SIMP_EXCL_SINGLETON    , 2 ), str(vcfResult.excludeSingleton) )
 
             print 'Progress Legend:'
             print ' print every       :', vcfResult.print_every
             print ' Heterozygous Dest : h'
+            print ' Homozygous        : o'
             print ' Heterozygous Indel: I'
             print ' Homozygous Indel  : i'
             print ' Source Indel      : s'
@@ -267,7 +274,7 @@ class vcfResult(object):
 
         if vcfResult.printsReal % vcfResult.linelen == 0 and vcfResult.printsReal != vcfResult.printsRealLast:
             vcfResult.printsRealLast = vcfResult.printsReal
-            sys.stderr.write(' {:14,d}\n'.format( vcfResult.prints ) )
+            sys.stderr.write('\nLast {:14,d}\n'.format( vcfResult.prints ) )
 
         sys.stderr.flush()
 
@@ -329,9 +336,16 @@ class vcfResult(object):
                 self.printprogress('h', key='Heterozygous Dest', skip=vcfResult.print_every)
                 #return ""
                 continue
+            
+            if ( vcfResult.excludHOMO   ) and ( set(sourc.split(',')) == set(desti.split(',')) ):
+                vcfResult.simpliStats['Homozygous'] += 1
+                #print "heretozygous: %s" % desti
+                self.printprogress('o', key='Homozygous', skip=vcfResult.print_every)
+                #return ""
+                continue
 
             if ( vcfResult.excludeINDEL ):
-                if desti.find('|') != -1: # is heterozygous
+                if desti.find(',') != -1: # is heterozygous
                     destis = desti.split('|')
                     for alt in destis:
                         if len(alt) > 1:
@@ -408,6 +422,7 @@ class vcfResult(object):
             ntspps = []
             for dst in dsts:
                 ntspps.extend( dsts[ dst ] )
+
             nt = len(set(ntspps))
 
             nw = len(dsts)
@@ -488,20 +503,21 @@ class vcfFile(object):
     Reads a VCF file and keeps the positions until NEXT is called.
     Used to facilitate the parallel reading of VCF files where all files have to be in the same coordinate.
     """
-    def __init__(self, infile, filedesc, filecare):
+    ignores = ['0|0', '0/0', './.'] # reference, nocov
+    def __init__(self, infile, filedesc, filecare, fileCol):
         self.infile   = infile
         self.filedesc = filedesc
         self.filecare = filecare
+        self.fileCol  = fileCol
 
-        infile = checkfile(infile)
-        fhd    = openvcffile(infile, 'r')
+        checkfile(infile)
 
         #print "  opening %s" % infile
-        self.names    = []
-        self.infhd    = fhd
-        self.state    = FHDOPEN
-        self.currLine = ""
-        self.register = vcfRegister()
+        self.names                = []
+        self.infhd                = openvcffile(infile, 'r')
+        self.state                = FHDOPEN
+        self.currLine             = ""
+        self.register             = vcfRegister()
         self.register['filename'] = infile
         self.register['filedesc'] = filedesc
         self.register['filecare'] = filecare
@@ -510,19 +526,37 @@ class vcfFile(object):
         """
         Requests the next line in the VCF file as a register
         """
-        if self.state == FHDOPEN:
+        while self.state == FHDOPEN:
+            self.register['chrom'] = None
+            self.register['pos'  ] = None
+            self.register['src'  ] = None
+            self.register['dst'  ] = None
+            self.register['desc' ] = None
+            self.register['state'] = self.state
+
             currLine = ""
+            again    = False
+
             while currLine is not None and len(currLine) == 0:
                 currLine = self.infhd.readline()
                 if len( currLine ) == 0 or currLine[-1] != "\n": # EOF
-                    currLine = None
+                    currLine   = None
+                    again      = True
                     self.state = FHDJUSTCLOSED
-                    return
+                    print 'f',
+                    break
+
                 elif len(currLine) == 1: # EMPTY LINE
-                    self.next()
-                    return
+                    again = True
+                    print 'e',
+                    break
+
                 else: #normal line
                     pass
+
+            if again:
+                print 'a',
+                continue
 
             #0               1       2       3       4       5       6       7                                                       8               9
             #SL2.40ch01      2118853 .       T       G       222     .       DP=40;AF1=1;CI95=1,1;DP4=0,0,16,23;MQ=60;FQ=-144        GT:PL:DP:GQ     1/1:255,117,0:39:99
@@ -530,8 +564,8 @@ class vcfFile(object):
             cols     = currLine.split("\t")
 
             if len(cols) == 0:
-                self.next()
-                return
+                print 'n',
+                continue
 
             elif currLine[0] == "#":
                 if currLine.startswith('##sources='):
@@ -544,77 +578,94 @@ class vcfFile(object):
                         print "error parsing sources"
                         print "num sources", numsources,"!=",len(self.names),sorted(self.names)
                         sys.exit(1)
+
                     else:
                         print "num sources:",numsources
 
-                self.next()
-                return
+                continue
 
-            try:
-                self.register['chrom'] =     cols[0]
-                self.register['pos'  ] = int(cols[1])
-                self.register['src'  ] =     cols[3]
-                self.register['dst'  ] =     cols[4]
+            assert len( cols ) > 9, str(cols)
 
-                if len( cols ) > 9:
-                    self.register['desc' ] =     cols[9]
+            descIndex = 9 + self.fileCol - 1
+            info      = cols[8]
+            desc      = cols[descIndex] # 1 based
 
-                    try:
-                        #print "has desc"
-                        info  = cols[8].split(':')
+            self.register['chrom'] =     cols[0]
+            self.register['pos'  ] = int(cols[1])
+            self.register['src'  ] =     cols[3]
+            self.register['dst'  ] =     cols[4]
+            self.register['desc' ] =     desc
+            self.register['dst'  ] = ",".join(sorted(list(set(self.register['src'  ].split(",") + self.register['dst'  ].split(",")))))
 
-                    except:
-                        info  = []
-
-                    #print " info", info
-                    if len(info) > 1:
-                        try:
-                            gtpos = info.index('GT')
-
-                        except:
-                            gtpos = None
-
-                        if gtpos is not None:
-                            #print "  GT pos", gtpos
-                            desc  = self.register['desc' ].split(":")
-                            #print "  desc", desc
-                            if len(info) == len(desc):
-                                #print "   len info == len desc", info, desc
-                                gtinfo = desc[gtpos]
-                                #print "   gtinfo", gtinfo
-                                #print "    gt1", gtinfo[ 0]
-                                #print "    gt2", gtinfo[-1]
-                                if any([gt == '0' for gt in (gtinfo[ 0], gtinfo[-1])]):
-                                    #print "has desc"
-                                    #print " info", info
-                                    #print "  GT pos", gtpos
-                                    #print "  desc", desc
-                                    #print "   len info == len desc", info, desc
-                                    #print "   gtinfo", gtinfo
-                                    #print "    gt1", gtinfo[ 0]
-                                    #print "    gt2", gtinfo[-1]
-                                    #print "   adding src to dst", self.register['src'  ], self.register['dst'  ]
-
-                                    self.register['dst'  ] = "|".join(sorted(list(set([self.register['src'  ]] + self.register['dst'  ].split("|")))))
-                                    #print "   added  src to dst", self.register['dst'  ]
-
+            if ':'  in desc and ':'  in info and 'GT' in info:
+                #assert ':'  in info, info
+                #assert 'GT' in info, info
+                #assert ':'  in desc, desc
+    
+                #print "has desc"
+                infoC  = info.split(':')
+                assert len(infoC) > 1, info
+                #print "  info" , info
+                #print "  infoC", infoC
+    
+                descC = desc.split(":")
+                assert len(descC) > 1, desc
+                #print "  desc" , desc
+                #print "  descC", descC
+    
+                gtpos = info.index('GT')
+                #print "  GT pos", gtpos
+    
+                assert len(infoC) == len(descC), info + "|" + desc
+                #print "   len infoC == len descC", infoC, descC
+    
+                gtDesc   = descC[gtpos]
+                gt0, gt1 = (None, None)
+    
+                if   '/' in gtDesc:
+                    gt0, gt1 = gtDesc.split('/')
+    
+                elif '|' in gtDesc:
+                    gt0, gt1 = gtDesc.split('|')
+    
                 else:
-                    self.register['desc' ] = ""
+                    assert False, 'unknown info fomat: %s (%s, %s)' % (gtDesc, info, desc)
+    
+                #print "   gtinfo", gtinfo
+                #print "    gt1", gt0
+                #print "    gt2", gt1
+                s = set([gt0, gt1])
+    
+                if gt0 == '.':                      # skip no coverage
+                    #print '.',
+                    continue
+    
+                if (len(s) == 1) and (gt0 == '0'): # homozygous identical to reference
+                    #print '0',
+                    continue
+    
+                #print 'v'
+                #if any([gt == '0' for gt in (gt0, gt1)]): #
+                #print "has desc"
+                #print " info", info
+                #print "  GT pos", gtpos
+                #print "  desc", desc
+                #print "   len info == len desc", info, desc
+                #print "   gtinfo", gtinfo
+                #print "    gt1", gtinfo[ 0]
+                #print "    gt2", gtinfo[-1]
+                #print "   adding src to dst", self.register['src'  ], self.register['dst'  ]
+    
+                #if gt0 == '0' or gt1 == '0': # if heretozygous and has reference, make it explicit
+                #    print gtinfo, 'h'
+                #    self.register['dst'  ] = ",".join(sorted(list(set(self.register['src'  ].split(",") + self.register['dst'  ].split(",")))))
+                #    #print "   added  src to dst", self.register['dst'  ]
 
-                self.register['state'] = self.state
+            #print 'V',
 
-            except (RuntimeError, TypeError, NameError):
-                print RuntimeError, TypeError, NameError
-                print "error getting colums", cols, currLine, "\n"
-                #self.next()
-                #return
-                sys.exit(1)
-        else:
-            self.register['chrom'] = None
-            self.register['pos'  ] = None
-            self.register['src'  ] = None
-            self.register['dst'  ] = None
-            self.register['desc' ] = None
+            break
+
+        self.register['state'] = self.state
 
     def close( self ):
         """
@@ -677,7 +728,25 @@ class vcfHeap(object):
         """
         print "adding file to heap"
         filecare = filecare == '1'
-        self.filePos[ (fileName, filedesc, filecare) ] = len( self.fileNames )
+        fileCol  = 1
+
+        if '|' in fileName:
+            cols     = fileName.split('|')
+            assert len(cols) == 2
+            fileName =     cols[0]
+            fileCol  = int(cols[1])
+            print "FILENAME %s COL %s" % (fileName, fileCol)
+
+        if not os.path.exists( fileName ):
+            print "vcf file %s does not exists" % fileName
+            sys.exit( 1 )
+
+        else:
+            print "vcf file %s does exists" % fileName
+
+        assert len(filedesc) > 0
+
+        self.filePos[ (fileName, filedesc, filecare, fileCol) ] = len( self.fileNames )
 
         if not filecare:
             self.noncarefiles.append(filedesc)
@@ -685,13 +754,13 @@ class vcfHeap(object):
         self.fileNames.append( (fileName, filedesc, filecare) )
 
         print "creating vcf handler"
-        self.filehandle.append( vcfFile( fileName, filedesc, filecare) );
+        self.filehandle.append( vcfFile( fileName, filedesc, filecare, fileCol ) );
         print "created vcf handler"
         self.fileStates.append( True );
         self.numOpenFiles += 1
 
         print "getting first register"
-        firstRegister = self.getRegister( self.filePos[ ( fileName, filedesc, filecare ) ] );
+        firstRegister = self.getRegister( self.filePos[ ( fileName, filedesc, filecare, fileCol ) ] );
         print "got first register"
 
         self.heapHead.append( firstRegister );
@@ -778,8 +847,8 @@ class vcfHeap(object):
         self.currResult = vcfResult( translation=self.translation )
         response        = []
 
-        chromCount = 0
-        posCount   = 0
+        chromCount      = 0
+        posCount        = 0
 
         has_more_chr = True
         if self.lastChr == "":
@@ -793,6 +862,7 @@ class vcfHeap(object):
                     'count total' : 0
                 }
 
+                print
                 print "   STARTING CHROMOSOME %s" % self.lastChr
 
             else:
@@ -919,12 +989,13 @@ def main(incsv, translation_str):
 
 
     translation = {}
-    for pair in translation_str.split(';'):
-        src, dst = pair.split(',')
-        assert src not in translation
-        translation[ src ] = dst
+    if translation_str is not None:
+        for pair in translation_str.split(';'):
+            src, dst = pair.split(',')
+            assert src not in translation
+            translation[ src ] = dst
 
-    print "Translation", translation
+        print "Translation", translation
 
 
     if os.path.exists( outfile ):
@@ -941,19 +1012,7 @@ def main(incsv, translation_str):
         line = line.strip()
         cols = line.split('\t')
 
-        try:
-            if not os.path.exists( cols[1] ):
-                print "vcf file %s does not exists" % cols[ 1 ]
-                sys.exit( 1 )
-
-            else:
-                print "vcf file %s does exists" % cols[ 1 ]
-
-        except:
-            print line
-            print cols
-            print "error parsing"
-            sys.exit(1)
+        assert len(cols) >= 2
 
         print cols, cols[:3]
         data.addFile(*cols[:3])
@@ -966,25 +1025,47 @@ def main(incsv, translation_str):
 
     mfh.write( data.getVcfHeader() )
 
-    lines = []
+    mfh.flush()
+
+
+    num_lines   = 0
+    print_every = 1000
+    lines       = []
     while not data.isempty():
         val = data.next()
 
         if val is not None: # if not empty
             lines.append( str( val ) )
-            if len( lines ) == 50000:
-                mfh.write( "".join( lines ) )
-                lines = []
+
+            if len( lines ) % (print_every/100) == 0:
+                sys.stdout.write('.'                   )
+                #sys.stdout.write(' {:14,d}\n'.format(len(lines)))
+                #break
+
+                if len( lines ) % print_every == 0:
+                    num_lines += len( lines )
+                    sys.stdout.write(' {:14,d}\n'.format(num_lines))
+                    #break
+
+                    mfh.write( "".join( lines ) )
+                    mfh.flush()
+                    lines = []
+
+                sys.stdout.flush()
 
         else:
             print "val is empty"
             break
 
     mfh.write( "".join( lines ) )
+    mfh.flush()
+    mfh.close()
+
+    num_lines += len( lines )
 
     lines = []
 
-    mfh.close()
+    sys.stdout.write('\nTotal {:14,d}\n'.format(num_lines))
 
     os.rename(outfile + '.tmp.vcf.gz', outfile)
 

@@ -1279,55 +1279,15 @@ def getManager(db_name):
 
 
 
-def init_db():
-    """
-    Load global/shared database
-    """
-    app.config["DATABASEINV"] = {}
-
-    if len(app.config["DATABASES"  ]) == 0:
-        """
-        If no database defined in config.py. quit
-        """
-        print '!!!!!!!!! NO DATABASES GIVEN. PLEASE ADD DATABASES !!!!!!!!!'
-
-    else:
-        with app.app_context():
-            print "loading db"
-
-            app.config["DATABASEINV"] = {}
-
-            #TODO: LOAD ON DEMAND INSTEAD OF HAVING ALL OF THEN AT THE SAME TIME
-            for dbp in range(len(app.config["DATABASES"  ])):
-                """
-                Loads each database, get creation date and initialize interface
-                """
-                db      =     app.config["DATABASES"  ][ dbp ]
-                dbname  = db[ DATABASES_DB_NAME   ]
-                dbfname = db[ DATABASES_DB_F_NAME ]
-                dbconf  = db[ DATABASES_DB_CONF   ]
-
-                app.config["DATABASEINV"][ dbname ] = dbp
-
-                man      = app.config["INTERFACE"         ].manager()
-                man.load_data( dbfname )
-
-                if 'custom_order' in dbconf:
-                    custom_orders = dbconf['custom_order']
-                    spps = man.getSpps()
-                    man.read_custom_orders(custom_orders, spps)
-
-                dbMtime = man.getDbTime()
-
-                db.append( dbMtime )
-                db.append( man     )
-
-                #print app.config["DATABASEINV"]
-                print "db loaded"
-
-
-
 def load_database():
+    if app.config['DEBUG']:
+        print "IN DEBUG MODE. MAIN TREAD: ", (os.environ.get('WERKZEUG_RUN_MAIN') is None)
+        if os.environ.get('WERKZEUG_RUN_MAIN') is None:
+            print " STILL RELOADING. NOT LOADING DATABASE"
+            return
+        else:
+            print " HAS RELOADED. LOADING DATABASE"
+
     print "GLOBING", app.config["INFOLDER"]
     files =       glob.glob( os.path.join( app.config["INFOLDER"], '*.pickle.gz') )
     files.extend( glob.glob( os.path.join( app.config["INFOLDER"], '*.sqlite'   ) ) )
@@ -1369,6 +1329,54 @@ def load_database():
     print app.config["DATABASES"  ]
 
     init_db()
+
+
+def init_db():
+    """
+    Load global/shared database
+    """
+    app.config["DATABASEINV"] = {}
+
+    if len(app.config["DATABASES"  ]) == 0:
+        """
+        If no database defined in config.py. quit
+        """
+        print '!!!!!!!!! NO DATABASES GIVEN. PLEASE ADD DATABASES !!!!!!!!!'
+        sys.exit(1)
+
+    else:
+        with app.app_context():
+            print "loading db"
+
+            app.config["DATABASEINV"] = {}
+
+            #TODO: LOAD ON DEMAND INSTEAD OF HAVING ALL OF THEN AT THE SAME TIME
+            for dbp in range(len(app.config["DATABASES"  ])):
+                """
+                Loads each database, get creation date and initialize interface
+                """
+                db      =     app.config["DATABASES"  ][ dbp ]
+                dbname  = db[ DATABASES_DB_NAME   ]
+                dbfname = db[ DATABASES_DB_F_NAME ]
+                dbconf  = db[ DATABASES_DB_CONF   ]
+
+                app.config["DATABASEINV"][ dbname ] = dbp
+
+                man      = app.config["INTERFACE"         ].manager()
+                man.load_data( dbfname )
+
+                if 'custom_order' in dbconf:
+                    custom_orders = dbconf['custom_order']
+                    spps = man.getSpps()
+                    man.read_custom_orders(custom_orders, spps)
+
+                dbMtime = man.getDbTime()
+
+                db.append( dbMtime )
+                db.append( man     )
+
+                #print app.config["DATABASEINV"]
+                print "db loaded"
 
 
 def read_nfo( db_title, db_nfo, path='.' ):

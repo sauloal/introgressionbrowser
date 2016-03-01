@@ -4,8 +4,8 @@ import os
 import sys
 import csv
 import re
-import unicodedata
-from unidecode import unidecode
+#import unicodedata
+#from unidecode import unidecode
 
 from filemanager import checkfile, openfile
 

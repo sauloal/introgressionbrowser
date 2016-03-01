@@ -126,7 +126,7 @@ def main(args):
         print "IDX", config['idx']
         print "GFF", config['ingffreader'].index
 
-        assert set(config['idx'].keys()) <= set(config['ingffreader'].index.keys()), "VCF chromosomes (%s) are not a subset from GFF (%s)" % (", ".join(config['idx'].keys()), ", ".join(config['ingffreader'].index.keys()) )
+        assert set(config['ingffreader'].index.keys()).issubset( set(config['idx'].keys()) ), "VCF chromosomes (%s) are not a subset from GFF (%s)" % (", ".join(config['idx'].keys()), ", ".join(config['ingffreader'].index.keys()) )
 
 
     if config['inchr'] is not None:

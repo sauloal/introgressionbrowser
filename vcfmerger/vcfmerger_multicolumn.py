@@ -3,7 +3,9 @@ import os
 import sys
 import csv
 import datetime
+import argparse
 
+from copy        import deepcopy
 from filemanager import checkfile, openfile, openvcffile
 from csv_renamer import get_translation
 
@@ -13,7 +15,11 @@ VCF=1001genomes_snp-short-indel_only_ACGTN.vcf.gz
 LST=A_thaliana_master_accession_list_1135_20151008.csv
 
 ${EX1} ${VCF}
-${EX1} ${VCF} ${LST} tg_ecotypeid name,othername,CS_number
+${EX1} --input ${VCF} --table ${LST} --keys tg_ecotypeid --table-values name,othername,CS_number --chromosome-translation "1:Chr1;2:Chr2;3:Chr3;4:Chr4;5:Chr5" --keep-no-coverage
+
+
+ln -s 1001genomes_snp-short-indel_only_ACGTN.vcf.gz.vcf.gz arabidopsis.csv.vcf.gz
+ln -s 1001genomes_snp-short-indel_only_ACGTN.vcf.gz.vcf.gz arabidopsis.csv.vcf.gz.simplified.vcf.gz
 """
 
 
@@ -25,6 +31,7 @@ class vcf(object):
         self.lastChrom    = None
         self.numRegs      = 0
         self.numRegsChrom = 0
+        self.stats        = {}
 
     def setFhd(self, fhd):
         self.fhd          = fhd
@@ -38,6 +45,8 @@ class vcf(object):
             self.numRegsChrom -= 1
             if self.lastChrom is not None:
                 sys.stdout.write(' Chrom {:14,d} Total {:14,d}\n'.format(self.numRegsChrom, self.numRegs))
+                print self.stats
+                self.fhd.flush()
 
             sys.stdout.write('\nChromosome {0}\n'.format(register['chrom']))
             sys.stdout.flush()
@@ -69,6 +78,10 @@ class vcf(object):
                 'HO': stats['homo'    ],
                 'HE': stats['het'     ]
             }
+        
+        for k in stats:
+            self.stats[k] = self.stats.get(k, 0) + stats[k]
+        
         info_str  = ";".join( [ "%s=%d" % ( x, ks[x] ) for x in sorted(ks) ] )
 
         restr = "\t".join([ register['chrom'], str(register['pos'  ]), '.', register['src'  ], register['dst'  ], '.', 'PASS', info_str, 'FI',  register['desc' ]])
@@ -108,6 +121,7 @@ class vcf(object):
 #CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tFILENAMES""" % (self.ctime, "|".join( fileDesc ), numFiles )
 
         self.printString(header)
+        self.fhd.flush()
 
 
 
@@ -116,21 +130,47 @@ class vcf(object):
 
 
 
-def main():
+def main(args):
+    parser  = argparse.ArgumentParser(description='Simplify merged VCF file.')
+    parser.add_argument('-i', '--input'                 , dest='input'            , required=True,                                    nargs='?', type=str, help='Input file'                                                 )
+    parser.add_argument('-o', '--output'                , dest='output'           ,                default=None,                      nargs='?', type=str, help='Output file'                                                 )
+    parser.add_argument('-t', '--table'                 , dest='table'            ,                default=None,                      nargs='?', type=str, help='Input table'                                                )
+    parser.add_argument('-k', '--keys'                  , dest='keys'             ,                default=None,                      nargs='?', type=str, help='Input keys'                                                 )
+    parser.add_argument('-v', '--table-values'          , dest='table_vs'         ,                default=None,                      nargs='?', type=str, help='Input table values'                                         )
+    parser.add_argument('-c', '--chromosome-translation', dest='translation'      ,                default=None,                      nargs='?', type=str, help='Translation table to chromosome names [e.g.: 1:Chr1;2:Chr2' )
+    parser.add_argument('-s', '--samples'               , dest='samples'          ,                default=None,                      nargs='?', type=str, help='Samples (Columns) to keep [e.g.: Spp1;Spp3;Spp5' )
+    parser.add_argument('-n', '--keep-no-coverage'      , dest='keep_no_coverage' ,                              action='store_true',                      help='Keep rows containing no coverage'                           )
+    parser.add_argument('-e', '--keep-heterozygous'     , dest='keep_heterozygous',                              action='store_true',                      help='Keep rows hoterozygosity'                           )
+
+    options = parser.parse_args(args)
+
+    print "Options", options
+
+    invcf   = options.input
+    
     try:
-        invcf  = sys.argv[1]
         checkfile(invcf)
         print "input vcf:              %s" % invcf
 
     except:
-        print "%s <invcf>" % sys.argv[0]
-        print "EG.: %s 1001genomes_snp-short-indel_only_ACGTN.vcf.gz" % sys.argv[0]
+        parser.print_usage()
+        #print "%s --input <invcf>" % sys.argv[0]
+        print "EG.: %s --input 1001genomes_snp-short-indel_only_ACGTN.vcf.gz" % sys.argv[0]
         sys.exit(1)
 
 
-    outFile    = invcf + '.vcf.gz'
-    outFileTmp = invcf + '.tmp.vcf.gz'
+    outbn = invcf
+    if options.output is not None:
+        outbn = options.output
 
+    outbn      += (".nc" if options.keep_no_coverage else "") + (".het" if options.keep_heterozygous else "")
+    listFile    = outbn + '.list.csv'
+    vcfFile     = outbn + '.list.csv.vcf.gz'
+    outFile     = outbn + '.list.csv.vcf.gz.simplified.vcf.gz'
+    outFileTmp  = outbn + '.list.csv.vcf.gz.simplified.tmp.vcf.gz'
+
+    if not os.path.exists(vcfFile):
+        os.symlink(invcf, vcfFile)
 
     if os.path.exists( outFile ):
         print "Out File (%s) EXISTS. quitting" % outFile
@@ -141,22 +181,24 @@ def main():
 
 
     try:
-        intbl  = sys.argv[2]
-        tbl_k  = sys.argv[3]
+        intbl  = options.table
         checkfile(intbl)
+        print "Input Table: %s" % intbl
 
     except:
         intbl  = None
-        tbl_k  = None
 
 
+    tbl_k  = None
+    if options.keys is not None:
+        tbl_k  = options.keys
+        print "Input Table keys: %s" % tbl_k
 
-    try:
-        tbl_vs = sys.argv[4].split(',')
 
-    except:
-        tbl_vs = None
-
+    tbl_vs = None
+    if options.table_vs is not None:
+        tbl_vs = options.table_vs.split(',')
+        print "Table values: %s" % options.table_vs
 
 
     data, atad = ( None, None )
@@ -165,6 +207,23 @@ def main():
         print 'DATA', data
         print 'ATAD', atad
 
+
+    translation = {}
+    if options.translation is not None:
+        for pair in options.translation.split(';'):
+            src, dst = pair.split(':')
+            assert src not in translation
+            translation[ src ] = dst
+
+        print "Translation", translation
+    else:
+        translation = None
+
+
+    columns = None
+    if options.samples is not None:
+        columns = options.samples.split(';')
+        assert len(columns) > 0, "No Columns %s" % str(columns)
 
 
     vcf_holder = vcf()
@@ -195,9 +254,17 @@ def main():
                         print "HEADER :: COL :: SHARED", shared
                         #print "HEADER :: COL :: NAMES" , names
 
-                        with open(invcf + '.list.csv', 'wb') as fhdl:
+                        if columns is not None:
+                            cdiff = list( set(columns) - set(names) )
+                            assert len( cdiff ) == 0, "Unknown column name: %s" % ( str(cdiff) )
+
+                        with open(listFile, 'wb') as fhdl:
                             writer = csv.writer(fhdl, delimiter='\t', quotechar='"')
                             for ln, name in enumerate(names):
+                                if columns is not None:
+                                    if name not in columns:
+                                        continue
+
                                 cols = ["1", "%s|%d" % (invcf, ln+1), name]
 
                                 if data is not None:
@@ -220,8 +287,8 @@ def main():
                     assert len( cols ) > 9
 
                     info      = cols[8]
-                    assert ':'  in info
-                    assert 'GT' in info
+                    assert ':'  in info, line
+                    assert 'GT' in info, line
 
                     #print "has desc"
                     infoC  = info.split(':')
@@ -232,12 +299,15 @@ def main():
                     gtpos = info.index('GT')
                     #print "  GT pos", gtpos
 
+                    if len(cols[3]) > 1:
+                        continue
+
                     register = {
                         'chrom':     cols[0] ,
                         'pos'  : int(cols[1]),
                         'src'  :     cols[3] ,
                         'dst'  :     cols[4] ,
-                        'desc' :         []  ,
+                        'desc' :         {}  ,
                         'stats':         {
                             'unphased' : 0,
                             'phased'   : 0,
@@ -248,16 +318,40 @@ def main():
                         }
                     }
                     descs             =     cols[9:]
+                    has_gap           = False
+                    is_het            = False
 
                     for colNum, desc in enumerate(cols[9:]):
-                        assert ':'  in desc
+                        colname = names[colNum]
+
+                        if columns is not None:
+                            if colname not in columns:
+                                continue
+
+                        if (desc == './.'):
+                            register['stats']['uncalled'] += 1
+                            if not options.keep_no_coverage:
+                                has_gap = True
+                                break
+                            else:
+                                continue
+
+                        assert ':'  in desc, desc + " " + str(cols[9:])
 
                         descC = desc.split(":")
                         assert len(descC) > 1
                         #print "  desc" , desc
                         #print "  descC", descC
 
-                        assert len(infoC) == len(descC)
+                        #assert len(infoC) == len(descC), str(infoC) + " " + str(descC) + " " + str(cols[9:])
+                        if len(infoC) != len(descC):
+                            register['stats']['uncalled'] += 1
+                            if not options.keep_no_coverage:
+                                has_gap = True
+                                break
+                            else:
+                                continue
+
                         #print "   len infoC == len descC", infoC, descC
 
                         gtDesc   = descC[gtpos]
@@ -279,32 +373,72 @@ def main():
                         if gt0 == '.' or gt1 == '.':                      # skip no coverage
                             #sys.stdout.write('.')
                             register['stats']['uncalled'] += 1
+                            if not options.keep_no_coverage:
+                                has_gap = True
+                                break
 
                         else:
                             if len(set([gt0, gt1])) == 1:
-                                #sys.stdout.write('ho')
+                                #sys.stdout.write('o')
                                 register['stats']['homo'] += 1
+                                
                                 if (gt0 == '0'): # homozygous identical to reference
                                     register['stats']['ref'] += 1
-                                    #sys.stdout.write('0')
+                                    continue
+                                    #register['desc' ].append( names[colNum] )
 
                             else:
-                                #sys.stdout.write('he')
+                                #sys.stdout.write('e')
                                 register['stats']['het'] += 1
+                                if not options.keep_heterozygous:
+                                    is_het = True
+                                    break
+                                else:
+                                    continue
+                            
+                            dstC = register['dst'].split(',')
+                            nuc0 = register['src'] if gt0 == '0' else dstC[ int(gt0) - 1 ]
+                            nuc1 = register['src'] if gt1 == '0' else dstC[ int(gt1) - 1 ]
+                            nucK = (nuc0, nuc1)
+                            
+                            if nucK not in register['desc' ]:
+                                register['desc' ][nucK] = []
+                                
+                            register['desc' ][nucK].append( names[colNum] )
 
-                            if gt0 == '0' or gt1 == '0': # if heretozygous and has reference, make it explicit
-                                #sys.stdout.write('H')
-                                alts = sorted(list(set(register['src'  ].split(",") + register['dst'  ].split(","))))
-                                alts = [ a for a in alts if a != '.' ]
-                                register['dst'  ] = ",".join(alts)
-                                #print "   added  src to dst", self.register['dst'  ]
+                            #if gt0 == '0' or gt1 == '0': # if heretozygous and has reference, make it explicit
+                            #    #sys.stdout.write('H')
+                            #    alts = sorted(list(set(register['src'  ].split(",") + register['dst'  ].split(","))))
+                            #    alts = [ a for a in alts if a != '.' ]
+                            #    register['dst'  ] = ",".join(alts)
+                            #    #print "   added  src to dst", self.register['dst'  ]
 
-                            register['desc' ].append( names[colNum] )
+                            
+                            #register['desc' ].append( names[colNum] )
 
+                    #sys.stdout.flush()
+                    
+                    if has_gap:
+                        continue
+
+                    if is_het:
+                        continue
+                    
                     if len(register['desc' ]) > 0:
                         #print '+\n'
-                        register['desc' ] = '|'.join(register['desc' ])
-                        vcf_holder.printRegister(register)
+                        
+                        if translation:
+                            register['chrom'] = translation.get(register['chrom'], register['chrom'])
+                        
+                        descs = deepcopy(register['desc' ])
+                        for desc in descs:
+                            register['desc' ] = '|'.join(descs[desc])
+
+                            if len(set(desc)) == 1:
+                                desc = desc[0]
+
+                            register['dst'  ] = ','.join(sorted(list(set(desc))))
+                            vcf_holder.printRegister(register)
 
                     else:
                         #print '-'
@@ -312,7 +446,10 @@ def main():
 
             fhdv.flush()
 
+        print "GLOBAL STATS"
+        print vcf_holder.stats
+
         os.rename(outFileTmp, outFile)
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])

@@ -4,8 +4,8 @@ import os
 import sys
 import csv
 import re
-import unicodedata
-from unidecode import unidecode
+#import unicodedata
+#from unidecode import unidecode
 
 """
 EX1=vcfmerger/csv_list_multicolumn.py
@@ -65,7 +65,7 @@ def get_translation(intbl, tbl_k, tbl_vs):
                 #vs = [ unidecode(v) for v in vs ]
 
                 v  = "_".join(vs)
-                k  = sanitize(k, ' -.,:()=#&;')
+                #k  = sanitize(k, ' -.,:()=#&;')
                 v  = sanitize(v, ' -.,:()=#&;')
 
                 assert k not in data, "key %s found more than once" % ( k )
@@ -75,6 +75,17 @@ def get_translation(intbl, tbl_k, tbl_vs):
                 atad[v] = k
 
     return data, atad
+
+
+def sanitize(s, k, v="_"):
+    for r in k:
+        s = s.replace(r, v)
+
+    s  = re.sub(v+'+', v, s)
+    s  = s.strip(v)
+    s  = s.decode('utf8').encode('ascii', 'backslashreplace')#, 'xmlcharrefreplace')
+
+    return s
 
 
 def main():
@@ -121,15 +132,6 @@ def main():
                 writer.writerow(cols)
 
 
-def sanitize(s, k, v="_"):
-    for r in k:
-        s = s.replace(r, v)
-
-    s  = re.sub(v+'+', v, s)
-    s  = s.strip(v)
-    s  = s.decode('utf8').encode('ascii', 'xmlcharrefreplace')
-
-    return s
 
 if __name__ == '__main__':
     main()

@@ -2,6 +2,8 @@
 
 import sys
 import os
+import argparse
+
 from   ete2 import Tree
 try:
     print "importing image"
@@ -19,7 +21,7 @@ except ImportError:
 import math
 import tempfile
 
-#ls trees/*.tree | xargs -I{} -P 20 bash -c 'echo {};  ./newick_to_png.py {} pimp_problems.lst; ./newick_to_png.py {} cherry.lst;'
+#ls trees/*.tree | xargs -I{} -P 20 bash -c 'echo {};  ./newick_to_png.py --input {} --inlist pimp_problems.lst; ./newick_to_png.py {} cherry.lst;'
 
 
 print_ascii        = False
@@ -40,11 +42,49 @@ def makeColorTransparent(image, color, thresh2=0):
         t=thresh2, d=distance2, c=color, r=red, g=green, b=blue, a=alpha))
     return image
 
-def main(infile, inlist=None, capt=None, ofp=None, output=None, ladderize=True, addcaption=True, extension="png", dpi=1200, fontsize=14):
-    add_file(infile, inlist=inlist, capt=capt, ofp=ofp, output=output, ladderize=ladderize, addcaption=addcaption, extension=extension, dpi=dpi, fontsize=fontsize)
+def main():
+    parser = argparse.ArgumentParser(description='Convert Newick file to PNG.')
+    parser.add_argument('--infile'       , dest='infile'       , default=None     , action='store'      , nargs='?', required=True,          type=str  , help='Input Newick file'          )
+    parser.add_argument('--inlist'       , dest='inlist'       , default=None     , action='store'      , nargs='?',                         type=str  , help='Input rename list'          )
+    parser.add_argument('--caption'      , dest='caption'      , default=None     , action='store'      , nargs='?',                         type=str  , help='Image caption'              )
+    parser.add_argument('--prefix'       , dest='prefix'       , default=None     , action='store'      , nargs='?',                         type=str  , help='File prefix'                )
+    parser.add_argument('--output'       , dest='output'       , default=None     , action='store'      , nargs='?',                         type=str  , help='Output name'                )
+    parser.add_argument('--extension'    , dest='extension'    , default="png"    , action='store'      , nargs='?',                         type=str  , help='Image extension'            )
+
+    parser.add_argument('--dpi'          , dest='dpi'          , default=1200     , action='store'      , nargs='?',                         type=int  , help='Image DPI'                  )
+    parser.add_argument('--fontsize'     , dest='fontsize'     , default=14       , action='store'      , nargs='?',                         type=int  , help='Font size'                  )
+
+    parser.add_argument('--no_ladderize' , dest='ladderize'    ,                    action='store_false',                                                help="Don't ladderize image"      )
+    parser.add_argument('--no_addcaption', dest='addcaption'   ,                    action='store_false',                                                help='Do not add caption to image')
+    parser.add_argument('--show_distance', dest='show_distance',                    action='store_true' ,                                                help='Plot with distance')
+
+    options = parser.parse_args()
+
+    print options
+
+    if options.infile is None:
+        print "No input file given"
+        parser.print_help()
+        sys.exit(1)
+
+    run(options.infile, 
+	inlist        = options.inlist       ,
+	capt          = options.caption      ,
+	ofp           = options.prefix       ,
+	output        = options.output       ,
+	ladderize     = options.ladderize    ,
+	addcaption    = options.addcaption   ,
+	extension     = options.extension    ,
+	dpi           = options.dpi          ,
+    show_distance = options.show_distance,
+	fontsize      = options.fontsize)
 
 
-def add_file(infile, inlist=None, capt=None, ofp=None, output=None, ladderize=True, addcaption=True, extension="png", dpi=1200, fontsize=14):
+def run(infile, inlist=None, capt=None, ofp=None, output=None, ladderize=True, addcaption=True, extension="png", dpi=1200, fontsize=14, show_distance=False):
+    add_file(infile, inlist=inlist, capt=capt, ofp=ofp, output=output, ladderize=ladderize, addcaption=addcaption, extension=extension, dpi=dpi, fontsize=fontsize, show_distance=show_distance)
+
+
+def add_file(infile, inlist=None, capt=None, ofp=None, output=None, ladderize=True, addcaption=True, extension="png", dpi=1200, fontsize=14, show_distance=False):
     if not os.path.exists( infile ):
         print "input file %s does not exists" % infile
         sys.exit( 1 )
@@ -62,7 +102,12 @@ def add_file(infile, inlist=None, capt=None, ofp=None, output=None, ladderize=Tr
     if ofp:
         outfile = ofp + "." + extension
 
-    tree = Tree(infile, format=9)
+    if show_distance:
+        tree = Tree(infile, format=0)
+    else:
+        #tree = Tree(infile, format=2)
+        #tree = Tree(infile, format=5)
+        tree = Tree(infile, format=9)
 
     #tree = Tree(open(infile, 'r').read())
 
@@ -85,8 +130,12 @@ def add_file(infile, inlist=None, capt=None, ofp=None, output=None, ladderize=Tr
         if ofp:
             outfile = ofp + "_" + inlist + "." + extension
 
-        if output:
-            outfile = output
+    elif ladderize:
+        tree.ladderize()
+
+
+    if output:
+        outfile = output
 
 
     makeimage(infile, outfile, caption, tree, addcaption=addcaption, dpi=dpi, fontsize=fontsize)
@@ -101,14 +150,17 @@ def add_seq(inseq, inlist=None, capt=None, ladderize=True, addcaption=False, ext
     with open(fnm, 'w') as fhi:
         fhi.write(inseq)
 
-    ofn = add_file(fnm, inlist=inlist, capt=capt, ladderize=ladderize, addcaption=addcaption, extension=extension, dpi=dpi, fontsize=fontsize)
+    ofn  = add_file(fnm, inlist=inlist, capt=capt, ladderize=ladderize, addcaption=addcaption, extension=extension, dpi=dpi, fontsize=fontsize)
 
     data = None
+
     print "opening png", ofn
+
     if os.path.exists( ofn ):
         with open(ofn, 'rb') as fho:
             data = fho.read()
         os.remove(ofn)
+
     else:
         print "tree image %s does not exists" % ofn
 
@@ -119,7 +171,9 @@ def add_seq(inseq, inlist=None, capt=None, ladderize=True, addcaption=False, ext
 
 def prune(inlist, tree, ladderize=True):
     print "pruning", inlist
+
     reqlist = []
+
     with open( inlist, 'r' ) as fhd:
         for line in fhd:
             line  = line.strip()
@@ -135,7 +189,9 @@ def prune(inlist, tree, ladderize=True):
             reqlist.append( line )
 
     print reqlist
+    
     tree.prune( reqlist, preserve_branch_length=True )
+    
     if ladderize:
         tree.ladderize()
 
@@ -229,20 +285,4 @@ def makeimage(infile, outfile, caption, tree, addcaption=True, dpi=1200, fontsiz
 
 
 if __name__ == '__main__':
-    try:
-        infile = sys.argv[1]
-
-    except:
-        print "no input file given"
-        sys.exit( 1 )
-
-
-    try:
-        inlist = sys.argv[2]
-
-    except:
-        print "no input list given"
-        inlist = None
-
-
-    main(infile, inlist=inlist)
+    main()

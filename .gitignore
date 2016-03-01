@@ -3,12 +3,14 @@
 *.sql
 *.log
 *.sqlite
+*~
 pypy
 tosql
 win/
 data/
 data2/
 data3/
+data4/
 introgression_viewer.tgz
 introgression_viewer.xz
 static/FileSaver.js/demo/

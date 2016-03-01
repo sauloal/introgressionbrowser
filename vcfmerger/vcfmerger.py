@@ -309,6 +309,8 @@ class vcfResult(object):
                 print "register #%d is empty" % register
                 sys.exit( 1 )
 
+            #print register
+
             #if rcount % 100 == 0:
             #    sys.stderr.write("\n")
             #    sys.stderr.flush()
@@ -332,14 +334,14 @@ class vcfResult(object):
 
             if ( vcfResult.excludHET    ) and ( desti.find(',') != -1 ):
                 vcfResult.simpliStats['Heterozygous Dest'] += 1
-                #print "heretozygous: %s" % desti
+                print "heterozygous: %s" % desti
                 self.printprogress('h', key='Heterozygous Dest', skip=vcfResult.print_every)
                 #return ""
                 continue
             
             if ( vcfResult.excludHOMO   ) and ( set(sourc.split(',')) == set(desti.split(',')) ):
                 vcfResult.simpliStats['Homozygous'] += 1
-                #print "heretozygous: %s" % desti
+                print "homozygous  : %s" % desti
                 self.printprogress('o', key='Homozygous', skip=vcfResult.print_every)
                 #return ""
                 continue
@@ -589,13 +591,13 @@ class vcfFile(object):
             descIndex = 9 + self.fileCol - 1
             info      = cols[8]
             desc      = cols[descIndex] # 1 based
+            #print cols
 
             self.register['chrom'] =     cols[0]
             self.register['pos'  ] = int(cols[1])
             self.register['src'  ] =     cols[3]
             self.register['dst'  ] =     cols[4]
             self.register['desc' ] =     desc
-            self.register['dst'  ] = ",".join(sorted(list(set(self.register['src'  ].split(",") + self.register['dst'  ].split(",")))))
 
             if ':'  in desc and ':'  in info and 'GT' in info:
                 #assert ':'  in info, info
@@ -640,9 +642,12 @@ class vcfFile(object):
                     #print '.',
                     continue
     
-                if (len(s) == 1) and (gt0 == '0'): # homozygous identical to reference
-                    #print '0',
-                    continue
+                if (gt0 == '0'): # homozygous identical to reference
+                    if len(s) == 1:
+                        #print '0',
+                        continue
+                    else:
+                        self.register['dst'  ] = ",".join(sorted(list(set(self.register['src'  ].split(",") + self.register['dst'  ].split(",")))))
     
                 #print 'v'
                 #if any([gt == '0' for gt in (gt0, gt1)]): #
@@ -720,6 +725,7 @@ class vcfHeap(object):
         self.noncarefiles = []
         self.currResult   = vcfResult( simplify=self.simplify, noncarefiles=self.noncarefiles, translation=translation )
         self.currResult   = None
+        
         print self.ctime
 
     def addFile( self, filecare, fileName, filedesc ):
@@ -991,7 +997,7 @@ def main(incsv, translation_str):
     translation = {}
     if translation_str is not None:
         for pair in translation_str.split(';'):
-            src, dst = pair.split(',')
+            src, dst = pair.split(':')
             assert src not in translation
             translation[ src ] = dst
 

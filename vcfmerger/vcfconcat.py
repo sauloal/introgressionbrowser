@@ -14,8 +14,8 @@ import vcfmerger
 import editdist
 from treemanager import fixsppname
 
-#GZ=SL2.40ch06g50000_000100001_000150000.vcf.gz.raw.vcf.gz; FA=$GZ.SL2.40ch06.fasta; ../vcfconcat.py -f -RIL -Rg -Rd -i $GZ; ../FastTreeMP -fastest -gamma -nt -bionj -boot 100 -log $FA.log -out $FA.tree $FA; ../FastTreeMP -nt -makematrix $FA > $FA.matrix; ./newick_to_png.py $FA.tree
-#FA=SL2.40ch06g50000_000100001_000150000.vcf.gz.SL2.40ch06.fasta; ../FastTreeMP -fastest -gamma -nt -bionj -boot 100 -log $FA.log -out $FA.tree $FA; ../FastTreeMP -nt -makematrix $FA > $FA.matrix; ./newick_to_png.py $FA.tree
+#GZ=SL2.40ch06g50000_000100001_000150000.vcf.gz.raw.vcf.gz; FA=$GZ.SL2.40ch06.fasta; ../vcfconcat.py -f -RIL -Rg -Rd -i $GZ; ../FastTreeMP -fastest -gamma -nt -bionj -boot 100 -log $FA.log -out $FA.tree $FA; ../FastTreeMP -nt -makematrix $FA > $FA.matrix; ./newick_to_png.py --infile $FA.tree
+#FA=SL2.40ch06g50000_000100001_000150000.vcf.gz.SL2.40ch06.fasta; ../FastTreeMP -fastest -gamma -nt -bionj -boot 100 -log $FA.log -out $FA.tree $FA; ../FastTreeMP -nt -makematrix $FA > $FA.matrix; ./newick_to_png.py --infile $FA.tree
 
 
 
@@ -30,21 +30,22 @@ def main(args):
 
 
     parser = argparse.ArgumentParser(description='Concatenate SNPs as a single sequence for each species.')
-    parser.add_argument('-c', '--chrom', '--chromosome', dest='chromosome' , default=None     , action='store'      , nargs='?',                         type=str  , help='Chromosome to filter [all]')
-    parser.add_argument('-I', '--ignore', '--skip'     , dest='ignore'     , default=[]       , action='append'     , nargs='*',                         type=str  , help='Chromosomes to skip')
-    parser.add_argument('-s', '--start'                , dest='start'      , default=None     , action='store'      , nargs='?',                         type=int  , help='Chromosome start position to filter [0]')
-    parser.add_argument('-e', '--end'                  , dest='end'        , default=None     , action='store'      , nargs='?',                         type=int  , help='Chromosome end position to filter [-1]')
-    parser.add_argument('-t', '--threads'              , dest='threads'    , default=0        , action='store'      , nargs='?',                         type=int  , help='Number of threads [num chromosomes]')
-    parser.add_argument('-f', '--fasta'                , dest='fasta'      ,                    action='store_true' ,                                                help='Output in fasta format [default: clustal alignment .aln format]')
-    parser.add_argument('-r', '--noref'                , dest='noref'      ,                    action='store_false',                                                help='Do not print reference [default: true]')
-    parser.add_argument('-R', '--RIL'                  , dest='RIL'        ,                    action='store_true' ,                                                help='RIL mode: false]')
-    parser.add_argument('-Rm','--RIL-mads'             , dest='RILmads'    , default=0.25     , action='store'      , nargs='?',                         type=float, help='RIL percentage of Median Absolute Deviation to use (smaller = more restrictive): 0.25]')
-    parser.add_argument('-Rs','--RIL-minsim'           , dest='RILminsim'  , default=0.75     , action='store'      , nargs='?',                         type=float, help='RIL percentage of nucleotides identical to reference to classify as reference: 0.75]')
-    parser.add_argument('-Rg','--RIL-greedy'           , dest='RILgreedy'  ,                    action='store_true' ,                                                help='RIL greedy convert nucleotides to either the reference sequence or the alternative sequence: false]')
-    parser.add_argument('-Rd','--RIL-delete'           , dest='RILdelete'  ,                    action='store_true' ,                                                help='RIL delete invalid sequences: false]')
-    parser.add_argument('-M' ,'--RIL-method'           , dest='groupMethod', default=dflmethod, action='store'      , nargs='?', choices=methods.keys(), type=str  , help='Clustering method for RIL selection of good and bad sequences [' + ','.join(methods.keys()) + ']')
+    parser.add_argument('-c', '--chrom' , '--chromosome', dest='chromosome' , default=None     , action='store'      , nargs='?',                         type=str  , help='Chromosome to filter [all]')
+    parser.add_argument('-I', '--ignore', '--skip'      , dest='ignore'     , default=[]       , action='append'     , nargs='*',                         type=str  , help='Chromosomes to skip')
+    parser.add_argument('-s', '--start'                 , dest='start'      , default=None     , action='store'      , nargs='?',                         type=int  , help='Chromosome start position to filter [0]')
+    parser.add_argument('-e', '--end'                   , dest='end'        , default=None     , action='store'      , nargs='?',                         type=int  , help='Chromosome end position to filter [-1]')
+    parser.add_argument('-t', '--threads'               , dest='threads'    , default=0        , action='store'      , nargs='?',                         type=int  , help='Number of threads [num chromosomes]')
+    parser.add_argument('-a', '--clustal'               , dest='fasta'      ,                    action='store_false',                                                help='Output in clustal .aln format [default: fasta format]')
+    parser.add_argument('-r', '--noref'                 , dest='noref'      ,                    action='store_false',                                                help='Do not print reference [default: true]')
+    parser.add_argument('-n', '--ref-name'              , dest='refname'    , default='ref'    , action='store'      , nargs='?',                         type=str  , help='Reference name [default: ref]')
+    parser.add_argument('-R', '--RIL'                   , dest='RIL'        ,                    action='store_true' ,                                                help='RIL mode: false]')
+    parser.add_argument('-Rm','--RIL-mads'              , dest='RILmads'    , default=0.25     , action='store'      , nargs='?',                         type=float, help='RIL percentage of Median Absolute Deviation to use (smaller = more restrictive): 0.25]')
+    parser.add_argument('-Rs','--RIL-minsim'            , dest='RILminsim'  , default=0.75     , action='store'      , nargs='?',                         type=float, help='RIL percentage of nucleotides identical to reference to classify as reference: 0.75]')
+    parser.add_argument('-Rg','--RIL-greedy'            , dest='RILgreedy'  ,                    action='store_true' ,                                                help='RIL greedy convert nucleotides to either the reference sequence or the alternative sequence: false]')
+    parser.add_argument('-Rd','--RIL-delete'            , dest='RILdelete'  ,                    action='store_true' ,                                                help='RIL delete invalid sequences: false]')
+    parser.add_argument('-M' ,'--RIL-method'            , dest='groupMethod', default=dflmethod, action='store'      , nargs='?', choices=methods.keys(), type=str  , help='Clustering method for RIL selection of good and bad sequences [' + ','.join(methods.keys()) + ']')
 
-    parser.add_argument('-i', '--input'                , dest='input'      , default=None     ,                       nargs='?',                         type=str  , help='Input file')
+    parser.add_argument('-i' , '--input'                , dest='input'      , default=None     ,                       nargs='?',                         type=str  , help='Input file')
     #parser.add_argument('input'                        ,                    default=None     , action='store'      , nargs='?', metavar='input file', type=str  , help='Input file')
 
     options = parser.parse_args(args)
@@ -55,7 +56,7 @@ def main(args):
     parallel     = False
 
     config = {
-        'format'       : 'aln',
+        'format'       : 'fasta',
         'ignore'       : [],
         'inchr'        : None,
         'inend'        : None,
@@ -63,6 +64,7 @@ def main(args):
         'infile'       : None,
         'instart'      : None,
         'noref'        : True,
+        'refname'      : None,
         'ouchr'        : None,
         'oufhd'        : None,
         'RIL'          : False,
@@ -83,6 +85,7 @@ def main(args):
     config['inend'      ] = options.end
     config['instart'    ] = options.start
     config['noref'      ] = options.noref
+    config['refname'    ] = options.refname
     config['threads'    ] = options.threads
     config['RIL'        ] = options.RIL
     config['RILmads'    ] = options.RILmads
@@ -110,8 +113,8 @@ def main(args):
         sys.exit(1)
 
 
-    if options.fasta:
-        config['format'  ]   = 'fasta'
+    if not options.fasta:
+        config['format'  ]   = 'aln'
 
 
     if ( config['instart'] is not None ) and ( config['inend'] is not None ):
@@ -465,7 +468,7 @@ def parse(config, refs, chro):
 
             if config['noref'   ]:
                 refsfrag = refsStrs[frag:frag+60]
-                printfilealn( config, 'ref'  , refsfrag, chro )
+                printfilealn( config, config['refname'], refsfrag, chro )
 
             for spp in sorted( sourcesStrs ):
                 poses     = sourcesStrs[spp]
@@ -483,7 +486,7 @@ def parse(config, refs, chro):
             printfilefasta(config, sppname, poses   , chro)
 
         if config['noref'   ]:
-            printfilefasta(config, 'ref'  , refsStrs, chro)
+            printfilefasta(config, config['refname'], refsStrs, chro)
 
 
 

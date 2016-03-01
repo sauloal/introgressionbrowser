@@ -154,18 +154,18 @@ def listChromsGff(ingff):
 
 def main(args):
     parser = argparse.ArgumentParser(description='Create makefile to convert files.')
-    parser.add_argument( '-i'  , '--input', '--inlist'                     , dest='inlist'                      , default=None      , nargs='?',                       type=str  , help='input tab separated file')
-    parser.add_argument( '-f'  , '--fasta', '--infasta'                    , dest='infasta'                     , default=None      , nargs='?',                       type=str  , help='input reference fasta. requires split size')
-    parser.add_argument( '-s'  , '--size' ,                                  dest='size'                        , default=0         , nargs='?',                       type=int  , help='split size')
-    parser.add_argument( '-p'  , '--proj' , '--project'                    , dest='project'                     , default=None      , nargs='?',                       type=str  , help='project name')
-    parser.add_argument( '-o'  , '--out'  , '--outfile'                    , dest='outfile'                     , default='Makefile', nargs='?',                       type=str  , help='output name [default: makefile]')
+    parser.add_argument( '-i'  , '--input'         , '--inlist'            , dest='inlist'                      , default=None      , nargs='?',                       type=str  , help='input tab separated file')
+    parser.add_argument( '-f'  , '--fasta'         , '--infasta'           , dest='infasta'                     , default=None      , nargs='?',                       type=str  , help='input reference fasta. requires split size')
+    parser.add_argument( '-s'  , '--size'                                  , dest='size'                        , default=0         , nargs='?',                       type=int  , help='split size')
+    parser.add_argument( '-p'  , '--proj'          , '--project'           , dest='project'                     , default=None      , nargs='?',                       type=str  , help='project name')
+    parser.add_argument( '-o'  , '--out'           , '--outfile'           , dest='outfile'                     , default='Makefile', nargs='?',                       type=str  , help='output name [default: makefile]')
     parser.add_argument( '-ec' , '--excluded-chrom'                        , dest='excluded_chroms'             , default=[]        ,            action='append'     , type=str  , help='Do not use the following chromosomes' )
     parser.add_argument( '-ic' , '--included-chrom'                        , dest='included_chroms'             , default=[]        ,            action='append'     , type=str  , help='Use EXCLUSIVELY these chromosomes' )
     #parser.add_argument( '-g' , '--gff'  , '--ingff'                      , dest='ingff'                       , default=None      , nargs='?',                       type=str  , help='input gff file')
 
-    parser.add_argument( '-n'  , '--dry'  , '--dry-run'                    , dest='dry'                         , default=False     ,            action='store_true' ,             help='dry-run')
-    parser.add_argument( '-m'  , '--merge', '--cluster_merge'              , dest='merge'                       , default=False     ,            action='store_true' ,             help='do merged clustering (resource intensive) [default: no]')
-    parser.add_argument( '-np' , '--no-pickle',                              dest='dopickle'                    , default=True      ,            action='store_false',             help='do not generate pickle database [default: no]')
+    parser.add_argument( '-n'  , '--dry'           , '--dry-run'           , dest='dry'                         , default=False     ,            action='store_true' ,             help='dry-run')
+    parser.add_argument( '-m'  , '--merge'         , '--cluster_merge'     , dest='merge'                       , default=False     ,            action='store_true' ,             help='do merged clustering (resource intensive) [default: no]')
+    parser.add_argument( '-np' , '--no-pickle'     ,                         dest='dopickle'                    , default=True      ,            action='store_false',             help='do not generate pickle database [default: no]')
 
     parser.add_argument( '-t'  , '--sub_threads'                           , dest='sub_threads'                 , default=5         , nargs='?',                       type=int  , help='threads of submake to tree building [default: 5]')
     parser.add_argument( '-St' , '--smart_threads'                         , dest='smart_threads'               , default=None      , nargs='?',                       type=int  , help='threads of submake to tree building [default: 5]')
@@ -175,12 +175,13 @@ def main(args):
     parser.add_argument( '-SS' , '--simplify-include-singleton'            , dest='simplify_do_singleton_filter', default=True      ,            action='store_false',             help='Do not simplify single SNPS')
     parser.add_argument( '-So' , '--simplify-output'                       , dest='simplify_output'             , default=None      , nargs='?',                       type=str  , help='Simplify output file')
 
-    parser.add_argument( '-Coc', '--concat-chrom',  '--concat-chromosome'  , dest='concat_chromosome'           , default=None      , nargs='?', action='store'      , type=str  , help='Concat - Chromosome to filter [all]')
+    parser.add_argument( '-Coc', '--concat-chrom' ,  '--concat-chromosome' , dest='concat_chromosome'           , default=None      , nargs='?', action='store'      , type=str  , help='Concat - Chromosome to filter [all]')
     parser.add_argument( '-CoI', '--concat-ignore', '--concat-skip'        , dest='concat_ignore'               , default=[]        , nargs='*', action='append'     , type=str  , help='Concat - Chromosomes to skip')
     parser.add_argument( '-Cos', '--concat-start'                          , dest='concat_start'                , default=None      , nargs='?', action='store'      , type=int  , help='Concat - Chromosome start position to filter [0]')
     parser.add_argument( '-Coe', '--concat-end'                            , dest='concat_end'                  , default=None      , nargs='?', action='store'      , type=int  , help='Concat - Chromosome end position to filter [-1]')
     parser.add_argument( '-Cot', '--concat-threads'                        , dest='concat_threads'              , default=None      , nargs='?', action='store'      , type=int  , help='Concat - Number of threads [num chromosomes]')
     parser.add_argument( '-Cor', '--concat-noref'                          , dest='concat_noref'                ,                                action='store_false',             help='Concat - Do not print reference [default: true]')
+    parser.add_argument( '-Con', '--concat-ref-name'                       , dest='concat_refname'              , default=None      , nargs='?', action='store'      , type=str  , help='Concat - Reference name [default: ref]')
     parser.add_argument( '-CoR', '--concat-RIL'                            , dest='concat_RIL'                  ,                                action='store_true' ,             help='Concat - RIL mode: false]')
     parser.add_argument( '-CoRm','--concat-RIL-mads'                       , dest='concat_RILmads'              , default=None      , nargs='?', action='store'      , type=float, help='Concat - RIL percentage of Median Absolute Deviation to use (smaller = more restrictive): 0.25]')
     parser.add_argument( '-CoRs','--concat-RIL-minsim'                     , dest='concat_RILminsim'            , default=None      , nargs='?', action='store'      , type=float, help='Concat - RIL percentage of nucleotides identical to reference to classify as reference: 0.75]')
@@ -249,6 +250,7 @@ def main(args):
     concat_end                   = options.concat_end
     concat_threads               = options.concat_threads
     concat_noref                 = options.concat_noref
+    concat_refname               = options.concat_refname
     concat_RIL                   = options.concat_RIL
     concat_RILmads               = options.concat_RILmads
     concat_RILminsim             = options.concat_RILminsim
@@ -851,6 +853,9 @@ cleanpickle_%(dirFix)s: cleanok
 
     if not concat_noref:
         concat_opts     += " --noref"
+        
+    if concat_refname:
+        concat_opts     += " --ref-name %s" % concat_refname
 
     if concat_RIL:
         concat_opts     += " --RIL"
@@ -907,13 +912,13 @@ tree: $(OUTTREE)
 png: $(OUTPNG)
 
 %%.vcf.gz.fasta.tree.png: %%.vcf.gz.fasta.tree
-\t%(topng)s $^
+\t%(topng)s --infile $^
 
 .PHONY: fasta
 fasta: $(OUTFASTA)
 
 %%.vcf.gz.fasta: %%.vcf.gz
-\t%(concat)s %(concat_opts)s --fasta -i $^
+\t%(concat)s %(concat_opts)s -i $^
 \tif [ -f "$@" ]; then rm $@; fi
 \tln `readlink -f $^.*.fasta` $@
 

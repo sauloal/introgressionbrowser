@@ -149,7 +149,8 @@ def admin():
 
             print "admin: has config - POST - action %s username %s password %s noonce %s security %s" % tuple([ str(x) for x in ( action, username, password, noonce, security ) ])
 
-            if username is not None and action is not None and noonce is not None and username != "admin" and "noonce" in session and noonce == session["noonce"]:
+            #if username is not None and action is not None and noonce is not None and username != "admin" and "noonce" in session and noonce == session["noonce"]:
+            if username is not None and action is not None and noonce is not None and "noonce" in session and noonce == session["noonce"]:
                 if action == "add":
                     print "admin: has config - POST. ADDING USER"
                     if password is None or generate_password_hash(username+noonce) == password:
@@ -192,7 +193,8 @@ def admin():
 
         session["noonce"] = gen_noonce()
         print "new noonce", session["noonce"]
-        return render_template('admin.html', users=[x for x in sorted(get_users()) if x != "admin"], message=message, noonce=session["noonce"], app=app)
+        #return render_template('admin.html', users=[x for x in sorted(get_users()) if x != "admin"], message=message, noonce=session["noonce"], app=app)
+        return render_template('admin.html', users=[x for x in sorted(get_users())], message=message, noonce=session["noonce"], app=app)
         #return app.send_static_file('login.html')
 
     else:

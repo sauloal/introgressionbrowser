@@ -105,7 +105,7 @@ class encryption(object):
                 os.remove(self.rsa_private_key_file_name)
 
             if ( os.path.exists( self.rsa_public_key_file_name2 ) ):
-                print "ssl key % exists. deleting" % self.rsa_public_key_file_name2
+                print "ssl key %s exists. deleting" % self.rsa_public_key_file_name2
                 os.remove(self.rsa_public_key_file_name2)
 
             print "PUBLIC KEY %s OR PRIVATE KEY %s DOES NOT EXISTS. CREATING" % (self.rsa_private_key_file_name, self.rsa_public_key_file_name2)
@@ -123,7 +123,7 @@ class encryption(object):
 
 
         if ( os.path.exists( self.rsa_public_key_file_name3 ) ):
-            print "ssl key % exists. deleting" % self.rsa_public_key_file_name3
+            print "ssl key %s exists. deleting" % self.rsa_public_key_file_name3
             os.remove(self.rsa_public_key_file_name3)
 
 

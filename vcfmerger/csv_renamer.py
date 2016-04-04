@@ -18,11 +18,18 @@ ${EX2} ${VCF}.list.csv ${LST} tg_ecotypeid name,othername,CS_number
 """
 
 def get_translation(intbl, tbl_k, tbl_vs):
-    data      = {}
-    atad      = {}
-    col_names = None
-    tbl_k_id  = None
-    tbl_v_ids = None
+    data        = {}
+    atad        = {}
+    no_name     = False
+
+    if tbl_k  is None or tbl_vs is None:
+        tbl_k   = 0
+        tbl_vs  = 1
+        no_name = True
+
+    col_names   = None
+    tbl_k_id    = None
+    tbl_v_ids   = None
 
     with open(intbl, 'rb') as fhd:
         reader = csv.reader(fhd, delimiter=',', quotechar='"')
@@ -34,13 +41,20 @@ def get_translation(intbl, tbl_k, tbl_vs):
 
             if ln == 0: #header
                 print cols
-                assert tbl_k in cols, "key   %s not in header %s" % (tbl_k, ", ".join(cols))
-                tbl_k_id  = cols.index(tbl_k)
+                
+                if no_name:
+                    tbl_k_id  =   tbl_k
+                    tbl_v_ids = [ tbl_vs ]
 
-                tbl_v_ids = []
-                for tbl_v in tbl_vs:
-                    assert tbl_v in cols, "value %s not in header %s" % (tbl_v, ", ".join(cols))
-                    tbl_v_ids.append( cols.index(tbl_v) )
+                else:
+                    assert tbl_k in cols, "key   %s not in header %s" % (tbl_k, ", ".join(cols))
+                    
+                    tbl_k_id  = cols.index(tbl_k)
+                    tbl_v_ids = []
+
+                    for tbl_v in tbl_vs:
+                        assert tbl_v in cols, "value %s not in header %s" % (tbl_v, ", ".join(cols))
+                        tbl_v_ids.append( cols.index(tbl_v) )
 
             else:
                 k  =   cols[tbl_k_id]

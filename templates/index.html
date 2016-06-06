@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en" data-ng-app='myApp' data-ng-controller="mainController">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="cache-control" content="public">
+        <meta name="viewport"    content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="iBrowser">
+        <meta name="author"      content="Saulo Aflitos">
+        <title>iBrowser</title>
+
+        <link   rel="shortcut icon" href="">
+        <link   rel="stylesheet"              href="/static/js/bootstrap/css/bootstrap.3.2.0.min.css"                      />
+        <link   rel="stylesheet"              href="/static/js/bootstrap/css/bootstrap-theme.3.2.0.min.css"                />
+        <link   rel="stylesheet"              href="/static/js/jquery/jquery-ui-1.11.0/jquery-ui.min.css"                  />
+        <link   rel="stylesheet"              href="/static/css/custom.css"                                                />
+
+        <script type="application/javascript" src="/static/js/jquery/jquery-2.1.1.min.js"                                   ></script>
+
+        <script type="application/javascript" src="/static/js/bootstrap/js/bootstrap.3.2.0.min.js"                          ></script>
+
+        <script type="application/javascript" src="/static/js/jquery/jquery-ui-1.11.0/jquery-ui.min.js"                     ></script>
+
+        <script type="application/javascript" src="/static/js/d3js/v3.4.9/d3.min.js"                                        ></script>
+
+        <script type="application/javascript" src="/static/js/angular/v1.3.0b14/angular.min.js"                             ></script>
+
+        <script type="application/javascript" src="/static/js/Blob.js/Blob.js"                                              ></script>
+
+        <script type="application/javascript" src="/static/js/canvas-toBlob.js/canvas-toBlob.js"                            ></script>
+
+        <script type="application/javascript" src="/static/js/FileSaver.js/FileSaver.js"                                    ></script>
+
+        <script type="application/javascript" src="/static/js/jsphylosvg-1.55/raphael-min.js"                               ></script>
+
+        <script type="application/javascript" src="/static/js/jsphylosvg-1.55/jsphylosvg-min.js"                            ></script>
+
+        <script type="application/javascript" src="/static/js/kinetic/kinetic-v5.1.0.min.js"                                ></script>
+
+        <!--<script type="application/javascript" src="/static/js/parallel/parallel.js"                                         ></script>-->
+    </head>
+
+
+    <body data-ng-cloak="true" data-ng-show="initiated">
+        <div id="working" data-ng-show="working">
+            <img class="imgworking" src="/static/images/Moire_Lines.svg"/>
+        </div>
+
+
+        <div id="tooltip"></div>
+
+
+        <div id="main_col">
+            <div class="main_col_div main_col_setup" data-ng-show="databases">
+                <p>
+                    <b>Setup</b>
+                    <i class="glyphicon glyphicon-cog" title="Setup"></i>
+                </p>
+            </div>
+
+
+            <div class="main_col_div" data-ng-disabled="databases">
+                <select class="sel input-sm form-control" title="Choose database" placeholder="- Select one database -" data-ng-model="databaseQry" data-ng-options="database for database in databases" data-ng-change="updateFields()"></select>
+            </div>
+
+
+            <div data-ng-show="databaseQry">
+                <div class="main_col_div">
+                    <p>
+                        <b>Database {[ databaseQry ]} Creation Time:</b> <span>{[ dbmtime ]}</span>
+                    </p>
+                </div>
+
+
+                <div class="main_col_div"><select class="sel form-control input-sm" title="Select Chromosome"                     placeholder="Select a Chromosome"       data-ng-disabled="!chromosomes" data-ng-model="chromosomeQry" data-ng-options="chromosomeL for chromosomeL in chromosomes" data-ng-change="getGenes()"   ><option value=''>- Please Select a Chromosome -</option></select></div>
+
+                <div data-ng-show="chromosomeQry">
+                    <div class="main_col_div"><select class="sel form-control input-sm" title="Select a Reference sample"             placeholder="Select a Reference Sample" data-ng-disabled="!(species && chromosomeQry)"     data-ng-model="specieQry"     data-ng-options="specieL     for specieL     in species    "                               ><option value=''>- Please Select a Reference Sample -</option></select></div>
+
+                    <div class="main_col_div" data-ng-show="specieQry">
+
+                        <hr/>
+
+                        <div class="status_div">
+                            <button                                 data-ng-class="{'unbevel': true}"                                       data-ng-click="cleanVars()"><i class="glyphicon glyphicon-remove"></i>Clear</button>
+                        </div>
+
+
+                        <div class="status_div">
+                            <button data-ng-model="showRow"         data-ng-class="{'bevel': showRow        , 'unbevel': !showRow        }" data-ng-click="toggleShowRow()"><i class="glyphicon glyphicon-tasks"></i>Show Row</button>
+                        </div>
+
+
+
+
+
+                        <div class="status_div"  data-ng-show="clusterlist">
+                            <!--<button data-ng-model="clusterSegments" data-ng-class="{'bevel': clusterSegments, 'unbevel': !clusterSegments}" data-ng-click="pre_changeColOrder()">Cluster Segments<i class="glyphicon glyphicon-sort-by-attributes"></i></button>-->
+
+                            <div class="collapse navbar-collapse bs-example-js-navbar-collapse">
+                                <ul class="nav navbar-nav">
+                                    <li class="dropdown">
+                                        <!--<a id="drop1" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown">Dropdown <span class="caret"></span></a>-->
+                                        <button id="drop1" data-toggle="dropdown" data-ng-class="{ 'unbevel': true, 'dropdown-toggle': true }"><i class="glyphicon glyphicon-sort-by-attributes"></i>Cluster Rows {[ vars.nextRowOrder ]}</button>
+
+                                        <ul class="dropdown-menu" role="menu" aria-labelledby="drop1">
+
+                                            <li role="presentation"                 data-ng-class="{'bevel': (vars.nextRowOrder == defaultClusterName), 'unbevel': !(vars.nextRowOrder == defaultClusterName) }" data-ng-click="vars.nextRowOrder = defaultClusterName"><a role="menuitem" tabindex="-1">{[ defaultClusterName ]}</a></button>
+                                            <!--<li role="presentation" class="divider"></li>-->
+                                            <!--<li role="presentation"><a role="menuitem" tabindex="-1" href="http://twitter.com/fat">Another action</a></li>-->
+
+                                            <li role="presentation" data-ng-repeat="clusterName in clusterlistchrom" data-ng-class="{'bevel': (vars.nextRowOrder == clusterName), 'unbevel': !(vars.nextRowOrder == clusterName) }" data-ng-click="vars.nextRowOrder = clusterName"><a role="menuitem" tabindex="-1">{[ clusterName ]}</a></button>
+
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <!--<button data-ng-model="clusterRows"     data-ng-class="{'bevel': clusterRows    , 'unbevel': !clusterRows    }" data-ng-click="pre_changeRowOrder()"><i class="glyphicon glyphicon-sort-by-attributes"></i>Cluster Rows</button>-->
+                        </div>
+
+
+                        <br/>
+                        <hr/>
+
+
+                        <div class="status_div">
+                            <button data-ng-repeat="(colorName, colorData) in setup.colors" data-ng-class="{'bevel': (vars.currColor == colorName), 'unbevel': !(vars.currColor == colorName) }" data-ng-click="updateColors(colorName)" style="color:{[ colorData.color ]}"><i class="glyphicon glyphicon-tint"></i>{[ colorName ]}</button>
+                        </div>
+
+
+                        <br/>
+                        <hr/>
+
+
+                        <input class="btn btn-primary btn-block"                    id="btn_send"   type="button" value="Send"                 title="Send Query"        data-ng-disabled="!(specieQry && chromosomeQry && databaseQry && isInList(species, specieQry) && isInList(chromosomes, chromosomeQry) )" data-ng-click="getData()">
+
+                        <hr/>
+
+                    </div>
+                </div>
+
+                <div data-ng-show="chromosomeQry">
+                    <b>OR</b>
+                    <div class="main_col_div"><select class="sel form-control input-sm" title="Select a Individual Gene to Visualize" placeholder="Select a Individual Gene"  data-ng-disabled="!(genes && chromosomeQry)"       data-ng-model="geneQry"       data-ng-options="geneL       for geneL       in genes      " data-ng-change="showGeneQry()"><option value=''>- Please Select a Individual Gene -</option></select></div>
+                </div>
+            </div>
+
+
+            <br/>
+            <hr/>
+
+
+            {% if not app.config['HAS_LOGIN'] %}
+            <div class="main_col_div">
+                <p class="extern_lnk">
+                    <a href="run"><b>Run</b></a>
+                </p>
+            </div>
+            {% endif %}
+
+
+            <div class="main_col_div">
+                <p>
+                    <b>Options</b>
+                    <i class="glyphicon glyphicon-chevron-down" title="Show Options" data-ng-click="showOptions=true"  data-ng-hide="showOptions"></i>
+                    <i class="glyphicon glyphicon-chevron-up"   title="Show Options" data-ng-click="showOptions=false" data-ng-show="showOptions"></i>
+                </p>
+            </div>
+
+            <div data-ng-show="showOptions">
+                <table>
+                    <tr><td><b>Column Text Width </b>: </td><td> 0 <input type="range" data-ng-model="setup.colTextWidth"     step="1"    min="0" max="100"/> 100 </td><td>{[ setup.colTextWidth     ]} em</td></tr>
+                    <tr><td><b>Row Text Width    </b>: </td><td> 0 <input type="range" data-ng-model="setup.rowTextWidth"     step="1"    min="0" max="100"/> 100 </td><td>{[ setup.rowTextWidth     ]} em</td></tr>
+
+                    <tr><td><b>Text Height       </b>: </td><td> 0 <input type="range" data-ng-model="setup.textHeight"       step="0.25" min="0" max="10" />  10 </td><td>{[ setup.textHeight       ]} em</td></tr>
+
+                    <tr><td><b>Cell Width        </b>: </td><td> 0 <input type="range" data-ng-model="setup.cellWidth"        step="0.1"  min="0" max="10" />  10 </td><td>{[ setup.cellWidth        ]} em</td></tr>
+                    <tr><td><b>Cell height       </b>: </td><td> 0 <input type="range" data-ng-model="setup.cellHeight"       step="0.1"  min="0" max="10" />  10 </td><td>{[ setup.cellHeight       ]} em</td></tr>
+                    <tr><td><b>Introgress height </b>: </td><td> 0 <input type="range" data-ng-model="setup.introgressheight" step="1"    min="0" max="30" />  30 </td><td>{[ setup.introgressheight ]} em</td></tr>
+
+                    <tr><td><b>Scale Height      </b>: </td><td> 0 <input type="range" data-ng-model="setup.scaleHeight"      step="0.5"  min="0" max="10" />  10 </td><td>{[ setup.scaleHeight      ]} em</td></tr>
+                    <tr><td><b>Scale Splits      </b>: </td><td> 3 <input type="range" data-ng-model="setup.scaleSplits"      step="1"    min="3" max="30" />  30 </td><td>{[ setup.scaleSplits      ]} columns</td></tr>
+                    <tr><td><b>Scale Text Width  </b>: </td><td> 0 <input type="range" data-ng-model="setup.scaleTextWidth"   step="0.5"  min="0" max="10" />  10 </td><td>{[ setup.scaleTextWidth   ]} em</td></tr>
+                    <tr><td><b>Scale Block Height</b>: </td><td> 0 <input type="range" data-ng-model="setup.scaleBlockHeight" step="0.5"  min="0" max="10" />  10 </td><td>{[ setup.scaleBlockHeight ]} em</td></tr>
+                    <tr><td><b>Scale Block Width </b>: </td><td> 0 <input type="range" data-ng-model="setup.scaleBlockWidth"  step="0.5"  min="0" max="10" />  10 </td><td>{[ setup.scaleBlockWidth  ]} em</td></tr>
+
+                    <tr><td><b>Graph Padding Top </b>: </td><td> 0 <input type="range" data-ng-model="setup.paddingTop"       step="0.5"  min="0" max="10" />  10 </td><td>{[ setup.paddingTop       ]} em</td></tr>
+                    <tr><td><b>Graph Padding Left</b>: </td><td> 0 <input type="range" data-ng-model="setup.paddingLeft"      step="0.5"  min="0" max="10" />  10 </td><td>{[ setup.paddingLeft      ]} em</td></tr>
+
+                    <tr><td colspan="3"><input type="button" data-ng-click="updateConfig()" value="Apply"/></td></tr>
+                </table>
+            </div>
+
+
+
+            <div id="footer">
+                <p>
+                    User: <span id="username">{[ username ]}</span>
+
+                    <a href="logout">Logout</a>
+
+                    <b>
+                        by Saulo Aflitos
+
+                        <a href="https://www.linkedin.com/in/sauloaflitos" title="LinkedIn Profile"><img src="static/images/LinkedIn_Logo60px.png" alt="LinkedIn Profile" class="srcicon"></a>
+
+                        <a href="http://www.ab.wur.nl/ab/"                 title="Applied Bioinformatics">Applied Bioinformatics</a>
+
+                        <a href="http://www.wageningenur.nl/en.htm"        title="Wageningen University"><img src="static/images/wur.png" alt="Wageningen University" class="srcicon"></a>
+                    </b>
+
+                    <i class="glyphicon glyphicon-question-sign" title="Help" data-ng-click="showHelp()"></i>
+                </p>
+            </div>
+        </div>
+
+
+
+
+
+
+
+
+        <div id="status" data-ng-show="data">
+            Start:           <b>{[ data.data_info.minPos.toLocaleString()         ]}</b>
+            bp (min          <b>{[ data.data_info.minPosAbs.toLocaleString()      ]}</b>
+            bp) End:         <b>{[ data.data_info.maxPos.toLocaleString()         ]}</b>
+            bp (max          <b>{[ data.data_info.maxPosAbs.toLocaleString()      ]}</b>
+            bp) min value:   <b>{[ data.data_info.minVal.toFixed(5).toLocaleString({minimumFractionDigits: 5, maximumFractionDigits: 5})         ]}</b>
+            max value:       <b>{[ data.data_info.maxVal.toFixed(5).toLocaleString({minimumFractionDigits: 5, maximumFractionDigits: 5})         ]}</b>
+            species:         <b>{[ data.data_info.num_rows.toLocaleString()       ]}</b>
+            unities:         <b>{[ data.data_info.num_cols.toLocaleString()       ]}</b>
+            (out of          <b>{[ data.data_info.num_cols_total.toLocaleString() ]}</b>
+            )
+            Zoom:            <b>{[ (( (canvas.body.attrs.scaleX || vars.defaultMatrixWidthScale)/ vars.defaultMatrixWidthScale  ) * 100 ) | number : 0 ]} %</b>
+            <!--Y:               {[ (( canvas.body.attrs.scaleY / vars.defaultMatrixHeightScale ) * 100 ) | number : 0 ]} %-->
+        </div>
+
+        <div id="wrap_buttons" data-ng-show="data">
+
+            <div class="status_div">
+                <button data-ng-click="downloadCanvasAsImage('png')"  class="btnicon"><i class="glyphicon glyphicon-floppy-disk"></i>PNG</button>
+                <button data-ng-click="downloadCanvasAsImage('jpeg')" class="btnicon"><i class="glyphicon glyphicon-floppy-disk"></i>JPG</button>
+            </div>
+
+            <div class="status_div">
+                <!--<input type="checkbox" data-ng-model="vars.showHeader" data-ng-change="updateWidthHeight()">Show Header</input>-->
+                <button data-ng-model="showRow"         data-ng-class="{'bevel': showRow        , 'unbevel': !showRow        }" data-ng-click="toggleShowRow()"><i class="glyphicon glyphicon-tasks"></i>Show Row</button>
+            </div>
+
+
+
+
+            <div class="status_div"  data-ng-show="clusterlist">
+                <!--<button data-ng-model="clusterSegments" data-ng-class="{'bevel': clusterSegments, 'unbevel': !clusterSegments}" data-ng-click="pre_changeColOrder()">Cluster Segments<i class="glyphicon glyphicon-sort-by-attributes"></i></button>-->
+
+                <div class="collapse navbar-collapse bs-example-js-navbar-collapse">
+                  <ul class="nav navbar-nav">
+                    <li class="dropdown">
+                      <!--<a id="drop1" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown">Dropdown <span class="caret"></span></a>-->
+                      <button id="drop1" data-toggle="dropdown" data-ng-class="{ 'unbevel': true, 'dropdown-toggle': true }"><i class="glyphicon glyphicon-sort-by-attributes"></i>Cluster Rows {[ vars.currRowOrder ]}</button>
+
+                      <ul class="dropdown-menu" role="menu" aria-labelledby="drop1">
+                        <li role="presentation" data-ng-repeat="clusterName in clusterNames" data-ng-class="{'bevel': (vars.currRowOrder == clusterName), 'unbevel': !(vars.currRowOrder == clusterName) }" data-ng-click="changeRowOrder(clusterName)"><a role="menuitem" tabindex="-1">{[ clusterName ]}</a></button>
+                      </ul>
+                    </li>
+                  </ul>
+                </div>
+
+                <!--<button data-ng-model="clusterRows"     data-ng-class="{'bevel': clusterRows    , 'unbevel': !clusterRows    }" data-ng-click="pre_changeRowOrder()"><i class="glyphicon glyphicon-sort-by-attributes"></i>Cluster Rows</button>-->
+            </div>
+
+
+
+
+            <div class="status_div">
+                <button data-ng-click="controller.moveLeftFull()"  data-ng-show="!setup.full_size" class="btnicon flipped"          title="Move Left Full" ><i class="glyphicon glyphicon-fast-backward"></i></button>
+                <button data-ng-click="controller.moveLeft()"      data-ng-show="!setup.full_size" class="btnicon flipped"          title="Move Left"      ><i class="glyphicon glyphicon-step-backward"></i></button>
+                <!--<button data-ng-click="controller.moveUp()"                                     class="btnicon clockwise"        title="">&#8680</button>-->
+                <button data-ng-click="controller.zoomOutX()"                                      class="btnicon"                  title="Zoom Out"       ><i class="glyphicon glyphicon-minus-sign"></i></button>
+                <button data-ng-click="controller.zoomReset()"                                     class="btnicon"                  title="Zoom Reset"     ><i class="glyphicon glyphicon-search"></i></button>
+                <button data-ng-click="controller.zoomInX()"                                       class="btnicon"                  title="Zoom In"        ><i class="glyphicon glyphicon-plus-sign"></i></button>
+                <!--<button data-ng-click="controller.moveDown()"                                   class="btnicon counterclockwise" title="">&#8680</button>-->
+                <button data-ng-click="controller.moveRight()"     data-ng-show="!setup.full_size" class="btnicon"                  title="Move Right"     ><i class="glyphicon glyphicon-step-forward"></i></button>
+                <button data-ng-click="controller.moveRightFull()" data-ng-show="!setup.full_size" class="btnicon"                  title="Move Right Full"><i class="glyphicon glyphicon-fast-forward"></i></button>
+                <button data-ng-click="controller.reset()"         data-ng-show="!setup.full_size" class="btnicon"                  title="Reset"          ><i class="glyphicon glyphicon-record"></i></button>
+            </div>
+
+
+            <div class="status_div">
+                <button data-ng-repeat="(colorName, colorData) in setup.colors" data-ng-class="{'bevel': (vars.currColor == colorName), 'unbevel': !(vars.currColor == colorName) }" data-ng-click="updateColors(colorName)" style="color:{[ colorData.color ]}"><i class="glyphicon glyphicon-tint"></i>{[ colorName ]}</button>
+            </div>
+
+        </div>
+
+        <div canvasmatrix id="imgcanvas" hasupdates="hasUpdatesG" func="funcs.matrix.canvas" data-ng-show="data"></div>
+        -
+        <div id="tree"></div>
+    </body>
+
+    <footer>
+        <!--CUSTOM SCRIPTS-->
+        <script type="application/javascript" src="/static/js/controller.js"                                                ></script>
+
+
+        <script type="application/javascript">
+          (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+          (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+          })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+          ga('create', 'UA-5291039-9', 'auto');
+          ga('send', 'pageview');
+        </script>
+    </footer>
+</html>

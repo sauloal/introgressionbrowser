@@ -53,12 +53,24 @@
                     <td>
                 </tr>
 
+                {% if users %}
+                <tr>
+                    <th align="left">Username</th>
+                    <th align="left">Action</th>
+                </tr>
                 {% for user in users %}
                 <tr>
                     <th align="left">{{ user }}</th>
-                    <td align="left"><a onclick="delete_user('{{user}}')" href="#">delete</a></td>
+                    <td align="left"><a onclick="delete_user('{{ user }}')" href="#">delete</a></td>
                 </tr>
                 {% endfor %}
+                {% else %}
+                <tr>
+                    <th align="left" colspan=2>No Users</th>
+                </tr>
+                {% endif %}
+
+                <tr><td colspan=2><br/></td></tr>
 
                 <tr>
                     <td colspan="2" align="left">
@@ -66,6 +78,8 @@
                     <td>
                 </tr>
             </table>
+            <br/>
+            <a href="run"><b>Run new data</b></a>
         </div>
     </body>
 
@@ -180,43 +194,6 @@
     //document.removeChild(form);
   }
 
-
-
-//window.onload = function() {
-//    document.getElementById('form').onsubmit = function() {
-//    var noonce = new Date().getTime() + '' + new Date().getMilliseconds();
-//    var hash = CryptoJS.SHA384("Message");
-//
-//    var form     = document.getElementById('form'    );
-//    console.log("form       : ", form);
-//
-//    var username = document.getElementById('username');
-//    console.log("username   : ", username);
-//    console.log("username   : ", username.value);
-//
-//    var password = document.getElementById('password');
-//    console.log("password   : ", password);
-//    console.log("password   : ", password.value);
-//
-//    var noonce   = document.getElementById('noonce');
-//    console.log("noonce     : ", noonce);
-//    console.log("noonce     : ", noonce.value);
-//
-//    var up         = username.value + password.value;
-//    console.log("up         : ", up);
-//
-//    var cryptPass  = CryptoJS.SHA384(up).toString(CryptoJS.enc.Hex);
-//    console.log("cryptPass  : ", cryptPass);
-//
-//    var data       = CryptoJS.SHA384(noonce.value + cryptPass).toString(CryptoJS.enc.Hex);
-//
-//    console.log("data       : ", data);
-//
-//    password.value = data;
-//
-//    return false;
-//  }
-//}
         </script>
 {% include 'hasher.html' without context %}
 {% if app.config['USE_ENCRYPTION'] %}

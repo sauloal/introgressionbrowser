@@ -367,3 +367,19 @@ div.status_div {
     /*font-size: medium;*/
     font-weight: 400;
 }
+
+.extern_lnk a:link {
+    color: white;
+}
+
+.extern_lnk a:visited {
+    color: white;
+}
+
+.extern_lnk a:hover {
+    color: white;
+}
+
+.extern_lnk a:active {
+    color: white;
+}

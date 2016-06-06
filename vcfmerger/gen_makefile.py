@@ -4,6 +4,8 @@ import sys
 import argparse
 import time
 import datetime
+import json
+
 ts        = time.time()
 timestamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
 
@@ -151,68 +153,108 @@ def listChromsGff(ingff):
 
     return chroms
 
+parser = argparse.ArgumentParser(description='Create makefile to convert files.')
+parser.add_argument( '-j'  , '--json'          , '--from_json'         , dest='fromJson'                    , default=None      , nargs='?',                       type=str  , help='load config from json')
+parser.add_argument( '-i'  , '--input'         , '--inlist'            , dest='inlist'                      , default=None      , nargs='?',                       type=str  , help='input tab separated file')
+parser.add_argument( '-f'  , '--fasta'         , '--infasta'           , dest='infasta'                     , default=None      , nargs='?',                       type=str  , help='input reference fasta. requires split size')
+parser.add_argument( '-s'  , '--size'                                  , dest='size'                        , default=0         , nargs='?',                       type=int  , help='split size')
+parser.add_argument( '-p'  , '--proj'          , '--project'           , dest='project'                     , default=None      , nargs='?',                       type=str  , help='project name')
+parser.add_argument( '-o'  , '--out'           , '--outfile'           , dest='outfile'                     , default='Makefile', nargs='?',                       type=str  , help='output name [default: makefile]')
+parser.add_argument( '-ec' , '--excluded-chrom'                        , dest='excluded_chroms'             , default=[]        ,            action='append'     , type=str  , help='Do not use the following chromosomes' )
+parser.add_argument( '-ic' , '--included-chrom'                        , dest='included_chroms'             , default=[]        ,            action='append'     , type=str  , help='Use EXCLUSIVELY these chromosomes' )
+#parser.add_argument( '-g' , '--gff'  , '--ingff'                      , dest='ingff'                       , default=None      , nargs='?',                       type=str  , help='input gff file')
+
+parser.add_argument( '-n'  , '--dry'           , '--dry-run'           , dest='dry'                         , default=False     ,            action='store_true' ,             help='dry-run')
+parser.add_argument( '-m'  , '--merge'         , '--cluster_merge'     , dest='merge'                       , default=False     ,            action='store_true' ,             help='do merged clustering (resource intensive) [default: no]')
+parser.add_argument( '-np' , '--no-pickle'     ,                         dest='dopickle'                    , default=True      ,            action='store_false',             help='do not generate pickle database [default: no]')
+
+parser.add_argument( '-t'  , '--sub_threads'                           , dest='sub_threads'                 , default=5         , nargs='?',                       type=int  , help='threads of submake to tree building [default: 5]')
+parser.add_argument( '-St' , '--smart_threads'                         , dest='smart_threads'               , default=None      , nargs='?',                       type=int  , help='threads of submake to tree building [default: 5]')
+
+parser.add_argument( '-SH' , '--simplify-include-hetero'               , dest='simplify_do_hetero_filter'   , default=True      ,            action='store_false',             help='Do not simplify heterozygous SNPS')
+parser.add_argument( '-SI' , '--simplify-include-indel'                , dest='simplify_do_indel_filter'    , default=True      ,            action='store_false',             help='Do not simplify indel SNPS')
+parser.add_argument( '-SS' , '--simplify-include-singleton'            , dest='simplify_do_singleton_filter', default=True      ,            action='store_false',             help='Do not simplify single SNPS')
+parser.add_argument( '-So' , '--simplify-output'                       , dest='simplify_output'             , default=None      , nargs='?',                       type=str  , help='Simplify output file')
+
+parser.add_argument( '-Coc', '--concat-chrom' ,  '--concat-chromosome' , dest='concat_chromosome'           , default=None      , nargs='?', action='store'      , type=str  , help='Concat - Chromosome to filter [all]')
+parser.add_argument( '-CoI', '--concat-ignore', '--concat-skip'        , dest='concat_ignore'               , default=[]        , nargs='*', action='append'     , type=str  , help='Concat - Chromosomes to skip')
+parser.add_argument( '-Cos', '--concat-start'                          , dest='concat_start'                , default=None      , nargs='?', action='store'      , type=int  , help='Concat - Chromosome start position to filter [0]')
+parser.add_argument( '-Coe', '--concat-end'                            , dest='concat_end'                  , default=None      , nargs='?', action='store'      , type=int  , help='Concat - Chromosome end position to filter [-1]')
+parser.add_argument( '-Cot', '--concat-threads'                        , dest='concat_threads'              , default=None      , nargs='?', action='store'      , type=int  , help='Concat - Number of threads [num chromosomes]')
+parser.add_argument( '-Cor', '--concat-noref'                          , dest='concat_noref'                ,                                action='store_false',             help='Concat - Do not print reference [default: true]')
+parser.add_argument( '-Con', '--concat-ref-name'                       , dest='concat_refname'              , default=None      , nargs='?', action='store'      , type=str  , help='Concat - Reference name [default: ref]')
+parser.add_argument( '-CoR', '--concat-RIL'                            , dest='concat_RIL'                  ,                                action='store_true' ,             help='Concat - RIL mode: false]')
+parser.add_argument( '-CoRm','--concat-RIL-mads'                       , dest='concat_RILmads'              , default=None      , nargs='?', action='store'      , type=float, help='Concat - RIL percentage of Median Absolute Deviation to use (smaller = more restrictive): 0.25]')
+parser.add_argument( '-CoRs','--concat-RIL-minsim'                     , dest='concat_RILminsim'            , default=None      , nargs='?', action='store'      , type=float, help='Concat - RIL percentage of nucleotides identical to reference to classify as reference: 0.75]')
+parser.add_argument( '-CoRg','--concat-RIL-greedy'                     , dest='concat_RILgreedy'            ,                                action='store_true' ,             help='Concat - RIL greedy convert nucleotides to either the reference sequence or the alternative sequence: false]')
+parser.add_argument( '-CoRd','--concat-RIL-delete'                     , dest='concat_RILdelete'            ,                                action='store_true' ,             help='Concat - RIL delete invalid sequences: false]')
+
+parser.add_argument( '-Ftt', '--fasttree_threads'                      , dest='fasttree_threads'            , default=1         , nargs='?',                       type=int  , help='FastTree - number of threads for fasttree')
+parser.add_argument( '-Ftb', '--fasttree_bootstrap'                    , dest='fasttree_bootstrap'          , default=100       , nargs='?',                       type=int  , help='FastTree - fasttree bootstrap')
+
+parser.add_argument( '-Cle', '--cluster-ext', '--cluster-extension'    , dest='cluster_extension'           , default=None      , nargs='?',                       type=str  , help='Cluster - [optional] extension to search. [default: .matrix]')
+parser.add_argument( '-Clt', '--cluster-threads'                       , dest='cluster_threads'             , default=1         , nargs='?',                       type=int  , help='Cluster - threads for clustering [default: 5]')
+parser.add_argument( '-Clp', '--cluster-no-png'                        , dest='cluster_dopng'               ,                                action='store_false',             help='Cluster - do not export cluster png')
+parser.add_argument( '-Cls', '--cluster-no-svg'                        , dest='cluster_dosvg'               ,                                action='store_false',             help='Cluster - do not export cluster svg')
+parser.add_argument( '-Cln', '--cluster-no-tree'                       , dest='cluster_dotree'              ,                                action='store_false',             help='Cluster - do not export cluster tree. precludes no png and no svg')
+parser.add_argument( '-Clr', '--cluster-no-rows'                       , dest='cluster_dorows'              ,                                action='store_false',             help='Cluster - no rows clustering')
+parser.add_argument( '-Clc', '--cluster-no-cols'                       , dest='cluster_docols'              ,                                action='store_false',             help='Cluster - no column clustering')
+
+parser.add_argument( '-Fic', '--filter-chrom'   , '--filter-chromosome', dest='filter_chromosome'           , default=None      , nargs='?', action='store'      , type=str  , help='Filter - Chromosome to filter [all]')
+parser.add_argument( '-Fig', '--filter-gff'     ,                        dest='filter_gff'                  , default=None      , nargs='?', action='store'      , type=str  , help='Filter - Gff Coordinate file')
+parser.add_argument( '-FiI', '--filter-ignore'  , '--filter-skip'      , dest='filter_ignore'               , default=[]        , nargs='*', action='append'     , type=str  , help='Filter - Chromosomes to skip')
+parser.add_argument( '-Fis', '--filter-start'   ,                        dest='filter_start'                , default=None      , nargs='?', action='store'      , type=int  , help='Filter - Chromosome start position to filter [0]')
+parser.add_argument( '-Fie', '--filter-end'     ,                        dest='filter_end'                  , default=None      , nargs='?', action='store'      , type=int  , help='Filter - Chromosome end position to filter [-1]')
+parser.add_argument( '-Fik', '--filter-knife'   ,                        dest='filter_knife'                ,                                action='store_true' ,             help='Filter - Export to separate files')
+parser.add_argument( '-Fin', '--filter-negative',                        dest='filter_negative'             ,                                action='store_true' ,             help='Filter - Invert gff')
+parser.add_argument( '-Fiv', '--filter-verbose' ,                        dest='filter_verbose'              ,                                action='store_true' ,             help='Filter - Verbose')
+parser.add_argument( '-Fip', '--filter-prot'    , '--filter-protein'   , dest='filter_protein'              , default=None      ,            action='store'      , type=str  , help='Filter - Input Fasta File to convert to Protein')
+
+parser.add_argument( '-Dbt', '--db-threads'     ,                        dest='db_read_threads'             , default=1         ,                                  type=int  , help='Db - Number of threads to read raw files'                    )
+
+class WrongParameter(Exception):
+    pass
+
+def loadFromJson(options):
+    jsonFile = options.fromJson
+    print "Loading Json", jsonFile
+    
+    jsonStr = "\n".join([l for l in open(jsonFile, 'r').read().split("\n") if len(l) > 0 and not l.startswith("#")])
+    
+    print "Json String", jsonStr
+    
+    pars = json.loads(jsonStr)
+    
+    print "Json Data", pars
+    
+    valids = []
+    
+    #print "actions", parser._actions, "\n\n"
+    for action in parser._actions:
+        #print "action", action.option_strings, action.dest
+        valids.extend([ a.strip('-') for a in action.option_strings])
+        valids.append(action.dest)
+
+    valids.sort()
+    
+    for k,v in pars.items():
+        print " - {}: {}".format(k,v)
+        
+        if k not in valids:
+            parser.print_usage()
+            parser.print_help()
+            raise WrongParameter()
+            
+        setattr(options, k, v)
 
 def main(args):
-    parser = argparse.ArgumentParser(description='Create makefile to convert files.')
-    parser.add_argument( '-i'  , '--input'         , '--inlist'            , dest='inlist'                      , default=None      , nargs='?',                       type=str  , help='input tab separated file')
-    parser.add_argument( '-f'  , '--fasta'         , '--infasta'           , dest='infasta'                     , default=None      , nargs='?',                       type=str  , help='input reference fasta. requires split size')
-    parser.add_argument( '-s'  , '--size'                                  , dest='size'                        , default=0         , nargs='?',                       type=int  , help='split size')
-    parser.add_argument( '-p'  , '--proj'          , '--project'           , dest='project'                     , default=None      , nargs='?',                       type=str  , help='project name')
-    parser.add_argument( '-o'  , '--out'           , '--outfile'           , dest='outfile'                     , default='Makefile', nargs='?',                       type=str  , help='output name [default: makefile]')
-    parser.add_argument( '-ec' , '--excluded-chrom'                        , dest='excluded_chroms'             , default=[]        ,            action='append'     , type=str  , help='Do not use the following chromosomes' )
-    parser.add_argument( '-ic' , '--included-chrom'                        , dest='included_chroms'             , default=[]        ,            action='append'     , type=str  , help='Use EXCLUSIVELY these chromosomes' )
-    #parser.add_argument( '-g' , '--gff'  , '--ingff'                      , dest='ingff'                       , default=None      , nargs='?',                       type=str  , help='input gff file')
-
-    parser.add_argument( '-n'  , '--dry'           , '--dry-run'           , dest='dry'                         , default=False     ,            action='store_true' ,             help='dry-run')
-    parser.add_argument( '-m'  , '--merge'         , '--cluster_merge'     , dest='merge'                       , default=False     ,            action='store_true' ,             help='do merged clustering (resource intensive) [default: no]')
-    parser.add_argument( '-np' , '--no-pickle'     ,                         dest='dopickle'                    , default=True      ,            action='store_false',             help='do not generate pickle database [default: no]')
-
-    parser.add_argument( '-t'  , '--sub_threads'                           , dest='sub_threads'                 , default=5         , nargs='?',                       type=int  , help='threads of submake to tree building [default: 5]')
-    parser.add_argument( '-St' , '--smart_threads'                         , dest='smart_threads'               , default=None      , nargs='?',                       type=int  , help='threads of submake to tree building [default: 5]')
-
-    parser.add_argument( '-SH' , '--simplify-include-hetero'               , dest='simplify_do_hetero_filter'   , default=True      ,            action='store_false',             help='Do not simplify heterozygous SNPS')
-    parser.add_argument( '-SI' , '--simplify-include-indel'                , dest='simplify_do_indel_filter'    , default=True      ,            action='store_false',             help='Do not simplify indel SNPS')
-    parser.add_argument( '-SS' , '--simplify-include-singleton'            , dest='simplify_do_singleton_filter', default=True      ,            action='store_false',             help='Do not simplify single SNPS')
-    parser.add_argument( '-So' , '--simplify-output'                       , dest='simplify_output'             , default=None      , nargs='?',                       type=str  , help='Simplify output file')
-
-    parser.add_argument( '-Coc', '--concat-chrom' ,  '--concat-chromosome' , dest='concat_chromosome'           , default=None      , nargs='?', action='store'      , type=str  , help='Concat - Chromosome to filter [all]')
-    parser.add_argument( '-CoI', '--concat-ignore', '--concat-skip'        , dest='concat_ignore'               , default=[]        , nargs='*', action='append'     , type=str  , help='Concat - Chromosomes to skip')
-    parser.add_argument( '-Cos', '--concat-start'                          , dest='concat_start'                , default=None      , nargs='?', action='store'      , type=int  , help='Concat - Chromosome start position to filter [0]')
-    parser.add_argument( '-Coe', '--concat-end'                            , dest='concat_end'                  , default=None      , nargs='?', action='store'      , type=int  , help='Concat - Chromosome end position to filter [-1]')
-    parser.add_argument( '-Cot', '--concat-threads'                        , dest='concat_threads'              , default=None      , nargs='?', action='store'      , type=int  , help='Concat - Number of threads [num chromosomes]')
-    parser.add_argument( '-Cor', '--concat-noref'                          , dest='concat_noref'                ,                                action='store_false',             help='Concat - Do not print reference [default: true]')
-    parser.add_argument( '-Con', '--concat-ref-name'                       , dest='concat_refname'              , default=None      , nargs='?', action='store'      , type=str  , help='Concat - Reference name [default: ref]')
-    parser.add_argument( '-CoR', '--concat-RIL'                            , dest='concat_RIL'                  ,                                action='store_true' ,             help='Concat - RIL mode: false]')
-    parser.add_argument( '-CoRm','--concat-RIL-mads'                       , dest='concat_RILmads'              , default=None      , nargs='?', action='store'      , type=float, help='Concat - RIL percentage of Median Absolute Deviation to use (smaller = more restrictive): 0.25]')
-    parser.add_argument( '-CoRs','--concat-RIL-minsim'                     , dest='concat_RILminsim'            , default=None      , nargs='?', action='store'      , type=float, help='Concat - RIL percentage of nucleotides identical to reference to classify as reference: 0.75]')
-    parser.add_argument( '-CoRg','--concat-RIL-greedy'                     , dest='concat_RILgreedy'            ,                                action='store_true' ,             help='Concat - RIL greedy convert nucleotides to either the reference sequence or the alternative sequence: false]')
-    parser.add_argument( '-CoRd','--concat-RIL-delete'                     , dest='concat_RILdelete'            ,                                action='store_true' ,             help='Concat - RIL delete invalid sequences: false]')
-
-    parser.add_argument( '-Ftt', '--fasttree_threads'                      , dest='fasttree_threads'            , default=1         , nargs='?',                       type=int  , help='FastTree - number of threads for fasttree')
-    parser.add_argument( '-Ftb', '--fasttree_bootstrap'                    , dest='fasttree_bootstrap'          , default=100       , nargs='?',                       type=int  , help='FastTree - fasttree bootstrap')
-
-    parser.add_argument( '-Cle', '--cluster-ext', '--cluster-extension'    , dest='cluster_extension'           , default=None      , nargs='?',                       type=str  , help='Cluster - [optional] extension to search. [default: .matrix]')
-    parser.add_argument( '-Clt', '--cluster-threads'                       , dest='cluster_threads'             , default=1         , nargs='?',                       type=int  , help='Cluster - threads for clustering [default: 5]')
-    parser.add_argument( '-Clp', '--cluster-no-png'                        , dest='cluster_dopng'               ,                                action='store_false',             help='Cluster - do not export cluster png')
-    parser.add_argument( '-Cls', '--cluster-no-svg'                        , dest='cluster_dosvg'               ,                                action='store_false',             help='Cluster - do not export cluster svg')
-    parser.add_argument( '-Cln', '--cluster-no-tree'                       , dest='cluster_dotree'              ,                                action='store_false',             help='Cluster - do not export cluster tree. precludes no png and no svg')
-    parser.add_argument( '-Clr', '--cluster-no-rows'                       , dest='cluster_dorows'              ,                                action='store_false',             help='Cluster - no rows clustering')
-    parser.add_argument( '-Clc', '--cluster-no-cols'                       , dest='cluster_docols'              ,                                action='store_false',             help='Cluster - no column clustering')
-
-    parser.add_argument( '-Fic', '--filter-chrom'   , '--filter-chromosome', dest='filter_chromosome'           , default=None      , nargs='?', action='store'      , type=str  , help='Filter - Chromosome to filter [all]')
-    parser.add_argument( '-Fig', '--filter-gff'     ,                        dest='filter_gff'                  , default=None      , nargs='?', action='store'      , type=str  , help='Filter - Gff Coordinate file')
-    parser.add_argument( '-FiI', '--filter-ignore'  , '--filter-skip'      , dest='filter_ignore'               , default=[]        , nargs='*', action='append'     , type=str  , help='Filter - Chromosomes to skip')
-    parser.add_argument( '-Fis', '--filter-start'   ,                        dest='filter_start'                , default=None      , nargs='?', action='store'      , type=int  , help='Filter - Chromosome start position to filter [0]')
-    parser.add_argument( '-Fie', '--filter-end'     ,                        dest='filter_end'                  , default=None      , nargs='?', action='store'      , type=int  , help='Filter - Chromosome end position to filter [-1]')
-    parser.add_argument( '-Fik', '--filter-knife'   ,                        dest='filter_knife'                ,                                action='store_true' ,             help='Filter - Export to separate files')
-    parser.add_argument( '-Fin', '--filter-negative',                        dest='filter_negative'             ,                                action='store_true' ,             help='Filter - Invert gff')
-    parser.add_argument( '-Fiv', '--filter-verbose' ,                        dest='filter_verbose'              ,                                action='store_true' ,             help='Filter - Verbose')
-    parser.add_argument( '-Fip', '--filter-prot'    , '--filter-protein'   , dest='filter_protein'              , default=None      ,            action='store'      , type=str  , help='Filter - Input Fasta File to convert to Protein')
-
-    parser.add_argument( '-Dbt', '--db-threads'     ,                        dest='db_read_threads'             , default=1         ,                                  type=int  , help='Db - Number of threads to read raw files'                    )
-
     options                      = parser.parse_args(args)
 
+    jsonFile                     = options.fromJson
+    
+    if jsonFile:
+        loadFromJson(options)
+    
     inlist                       = options.inlist
     infasta                      = options.infasta
     #ingff                        = options.ingff

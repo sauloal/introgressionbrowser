@@ -15,7 +15,7 @@ from jinja2      import TemplateNotFound, Markup
 print "importing user database"
 sys.path.insert(0, os.path.dirname(os.path.abspath( __file__ )))
 from user_database import *
-
+import runner
 
 
 DATABASES_DB_NAME         = 0
@@ -74,6 +74,15 @@ def before_request():
 
 
 
+
+@app.route("/", methods=['GET'])
+def get_main():
+    #return redirect ( url_for('static', filename='index.html' ) )
+    if app.config['HAS_LOGIN'] and session['username'] == 'admin':
+        return redirect(url_for('admin', _external=True))
+
+    return render_template('index.html', app=app)
+    #return app.send_static_file('index.html')
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -135,61 +144,70 @@ def admin():
     message = None
     print "admin"
     if app.config['HAS_LOGIN']:
-        if request.method == 'POST':
-            print "admin: has config - POST"
-            action   = request.form.get('action'  , None)
-            username = request.form.get('username', None)
-            password = request.form.get('password', None)
-            noonce   = request.form.get('noonce'  , None)
-            security = request.form.get('security', None)
-
-            if app.config['USE_ENCRYPTION']:
-                if password is not None:
-                    password = app.config["ENCRYPTION_INST"].decrypter( password )
-
-            print "admin: has config - POST - action %s username %s password %s noonce %s security %s" % tuple([ str(x) for x in ( action, username, password, noonce, security ) ])
-
-            #if username is not None and action is not None and noonce is not None and username != "admin" and "noonce" in session and noonce == session["noonce"]:
-            if username is not None and action is not None and noonce is not None and "noonce" in session and noonce == session["noonce"]:
-                if action == "add":
-                    print "admin: has config - POST. ADDING USER"
-                    if password is None or generate_password_hash(username+noonce) == password:
-                        print "admin: has config - POST - not none. noonce match. NO PASSWORD"
-                        message = "FAILED TO ADD USER %s. NO PASSWORD" % username
-
-                    elif not str(username).isalnum():
-                        print "admin: has config - POST - not none. noonce match. INVALID USERNAME"
-                        message = "FAILED TO ADD USER %s. INVALID USERNAME" % username
-
-                    else:
-                        print "admin: has config - POST - not none. noonce match"
-
-                        if check_user_exists(username):
-                            print "admin: has config - POST - not none - user in credentials. ALREADY EXISTS"
-                            message = "FAILED TO ADD USER %s. ALREADY EXISTS" % username
-
+        if 'username' in session and session['username'] and session['username'] == 'admin':
+            if request.method == 'POST':
+                print "admin: has config - POST"
+                action   = request.form.get('action'  , None)
+                username = request.form.get('username', None)
+                password = request.form.get('password', None)
+                noonce   = request.form.get('noonce'  , None)
+                security = request.form.get('security', None)
+    
+                if app.config['USE_ENCRYPTION']:
+                    if password is not None:
+                        password = app.config["ENCRYPTION_INST"].decrypter( password )
+    
+                print "admin: has config - POST - action %s username %s password %s noonce %s security %s" % tuple([ str(x) for x in ( action, username, password, noonce, security ) ])
+    
+                #if username is not None and action is not None and noonce is not None and username != "admin" and "noonce" in session and noonce == session["noonce"]:
+                if username is not None and action is not None and noonce is not None and "noonce" in session and noonce == session["noonce"]:
+                    if action == "add":
+                        print "admin: has config - POST. ADDING USER"
+                        if password is None or generate_password_hash(username+noonce) == password:
+                            print "admin: has config - POST - not none. noonce match. NO PASSWORD"
+                            message = "FAILED TO ADD USER %s. NO PASSWORD" % username
+    
+                        elif not str(username).isalnum():
+                            print "admin: has config - POST - not none. noonce match. INVALID USERNAME"
+                            message = "FAILED TO ADD USER %s. INVALID USERNAME" % username
+    
                         else:
-                            if security is None or security != generate_password_hash(password+noonce):
-                                print "admin: has config - POST - not none. SECURITY FAILED %s vs %s" % (str(security), generate_password_hash(password+noonce))
-                                message = "FAILED TO ADD USER %s. SECURITY FAILED" % ( username )
-
+                            print "admin: has config - POST - not none. noonce match"
+    
+                            if check_user_exists(username):
+                                print "admin: has config - POST - not none - user in credentials. ALREADY EXISTS"
+                                message = "FAILED TO ADD USER %s. ALREADY EXISTS" % username
+    
                             else:
-                                print "admin: has config - POST - not none - user not in credentials. ADDING user %s pass %s salt %s" % ( username, password, noonce )
-                                add_user(username, password, noonce)
-                                message = "SUCCESS IN ADDING USER %s" % ( username )
-
-                elif action == "del":
-                    print "admin: has config - POST - not none. noonce match. DELETING USER:", username
-
-                    if check_user_exists(username):
-                        del_user(username)
-                        message = "SUCCESS IN DELETING USER %s" % username
-
-                    else:
-                        message = "FAILED TO DELETE USER '%s'. DOES NOT EXISTS" % username
-
-            else:
-                message = "TRY AGAIN"
+                                if security is None or security != generate_password_hash(password+noonce):
+                                    print "admin: has config - POST - not none. SECURITY FAILED %s vs %s" % (str(security), generate_password_hash(password+noonce))
+                                    message = "FAILED TO ADD USER %s. SECURITY FAILED" % ( username )
+    
+                                else:
+                                    print "admin: has config - POST - not none - user not in credentials. ADDING user %s pass %s salt %s" % ( username, password, noonce )
+                                    add_user(username, password, noonce)
+                                    message = "SUCCESS IN ADDING USER %s" % ( username )
+    
+                    elif action == "del":
+                        print "admin: has config - POST - not none. noonce match. DELETING USER:", username
+    
+                        if check_user_exists(username):
+                            del_user(username)
+                            message = "SUCCESS IN DELETING USER %s" % username
+    
+                        else:
+                            message = "FAILED TO DELETE USER '%s'. DOES NOT EXISTS" % username
+    
+                else: # if username is not None and action is not None and noonce is not None and "noonce" in session and noonce == session["noonce"]:
+                    print "NOONCE ERROR"
+                    message = "TRY AGAIN"
+            else: # if request.method == 'POST':
+                print "NOT POST REQUEST"
+                message = "wrong request"
+        else: # if 'username' in session and session['username'] and session['username'] == 'admin'
+            print "NOT ADMIN TRYING TO ACCESS ADMIN PAGE"
+            return redirect(url_for('login', _external=True))
+                
 
         session["noonce"] = gen_noonce()
         print "new noonce", session["noonce"]
@@ -199,7 +217,87 @@ def admin():
 
     else:
         print "admin: no config"
-        return redirect(url_for('get_main', _external=True))
+        return render_template('admin.html', message=message, noonce=session["noonce"], app=app)
+
+
+@app.route('/run', methods=['GET', 'POST'])
+def run():
+    """
+    run page
+    """
+
+    message = None
+    print "run"
+
+    if app.config['HAS_LOGIN']:
+        if 'username' in session and session['username'] and session['username'] == 'admin':
+            print "run: has config - ADMIN ACCESSING RUN PAGE"
+            
+            if request.method == 'POST':
+                print "run: has config - POST"
+            
+                if not request.data:
+                    abort(501, "no payload")
+            
+                try:
+                    data = json.loads( request.data )
+                except:
+                    abort(502, "invalid payload {}".format(request.data) )
+                
+                noonce   = data.get('noonce'  , None)
+                
+                if noonce is not None and "noonce" in session and noonce == session["noonce"]:
+                    return processRunRequest(data)
+                
+                else:
+                    message = "wrong noonce. try again ({})\ngot       {}\nexpecting {}\n".format(request.method, noonce, session["noonce"])
+                    if request.method == 'POST':
+                        abort(503, message)
+                    
+                    else:
+                        print message
+                        session["noonce"] = gen_noonce()
+                        print "new noonce", session["noonce"]
+                        return render_template('run.html', noonce=session["noonce"], message=message, app=app)
+
+            else:
+                session["noonce"] = gen_noonce()
+                print "new noonce", session["noonce"]
+                return render_template('run.html', noonce=session["noonce"], message=message, app=app)
+                
+        else: # if 'username' in session and session['username'] and session['username'] == 'admin':
+            print "run: has config - NOT ADMIN TRYING TO ACCESS RUN PAGE"
+            return redirect(url_for('login', _external=True))
+
+    else: # if app.config['HAS_LOGIN']:
+        print "run: no login"
+        return processRunRequest()
+
+def processRunRequest(data):
+    message  = None
+    
+    action   = data.get('action'  , None)
+    data     = data.get('data'    , None)
+    noonce   = data.get('noonce'  , None)
+
+    print "run: has config - POST - action %s data %s noonce %s" % tuple([ str(x) for x in ( action, data, noonce ) ])
+
+    #if username is not None and action is not None and noonce is not None and username != "admin" and "noonce" in session and noonce == session["noonce"]:
+    if action is not None and data is not None:
+        if   action == "get":
+            print "run: has config - POST. GETTING DATA"
+            return jsonify(runner.get(app, data))
+
+        elif action == "run":
+            print "run: has config - POST. RUNNING"
+            return jsonify(runner.run(app, data))
+       
+        else:
+            print "run: has config - POST. UNKNOWN COMMAND %s" % ( action )
+            abort(501, "unknown command {}".format(action))
+    else:
+        message = "runonce error. try again"
+        return render_template('run.html', message=message, app=app)
 
 
 @app.route('/salt/<username>', methods=['GET'])
@@ -245,14 +343,6 @@ def get_username():
     else:
         return jsonify({'username': 'libre'})
 
-
-@app.route("/", methods=['GET'])
-def get_main():
-    #return redirect ( url_for('static', filename='index.html' ) )
-    if app.config['HAS_LOGIN'] and session['username'] == 'admin':
-        return redirect(url_for('admin', _external=True))
-
-    return app.send_static_file('index.html')
 
 
 @app.route("/alive", methods=['GET'])
@@ -401,21 +491,21 @@ EXAMPLE DATA
 curl "http://assembly.ab.wurnet.nl:10000/api/dbs"
 {
   "databases": [
-    "Arabidopsis 50k",
     "Arabidopsis 10k - Chr 4 - Xianwen",
-    "Tomato 84 - 10Kb - Introgression",
-    "Tomato 84 - 10Kb",
-    "Tomato 60 RIL - 50k - RIL mode - Delete",
     "Arabidopsis 10k - Chr 4 - Xianwen - Single",
-    "Tomato 84 - 50Kb",
-    "Tomato 60 RIL - 50k",
-    "Tomato 84 - Genes",
-    "Tomato 60 RIL - 10k",
-    "Tomato 60 RIL - 50k - RIL mode - Greedy",
-    "Tomato 60 RIL - 50k - RIL mode",
+    "Arabidopsis 50k",
     "Arabidopsis 50k - Chr 4 - Xianwen",
-    "Tomato 84 - 50Kb - Introgression",
     "Arabidopsis 50k - Chr 4 - Xianwen - Single"
+    "Tomato 60 RIL - 10k",
+    "Tomato 60 RIL - 50k",
+    "Tomato 60 RIL - 50k - RIL mode",
+    "Tomato 60 RIL - 50k - RIL mode - Delete",
+    "Tomato 60 RIL - 50k - RIL mode - Greedy",
+    "Tomato 84 - 10Kb",
+    "Tomato 84 - 10Kb - Introgression",
+    "Tomato 84 - 50Kb",
+    "Tomato 84 - 50Kb - Introgression",
+    "Tomato 84 - Genes",
   ]
 }
 
@@ -1238,37 +1328,18 @@ def filterClusters(data, method):
 
                 if method == "DEL":
                     del data[cls][rc][rctName]
+                    
                 elif method == "B64":
                     val = data[cls][rc][rctName]
+                    
                     if val is not None:
                         data[cls][rc][rctName] = base64.standard_b64encode( val )
+                        
                     else:
                         data[cls][rc][rctName] = None
 
                 #print "rc", rc, 'rct', rct, 'rctName', rctName, method, 'FINISHED'
 
-        #for rc in ['rows', 'cols']:
-        #    if rc not in data[cls]:
-        #        print "no rc",rc,"in table",cls
-        #        continue
-        #    print "cls", cls,"rc",rc
-        #
-        #    for rct in ['Png', 'Svg']:
-        #        rctName = rc+rct
-        #        print "cls", cls,"rc",rc,'rct',rct,'rctName',rctName
-        #
-        #        if rctName not in data[cls][rc]:
-        #            print "no rctname in table",cls,rc
-        #            continue
-        #
-        #        print "cls", cls,"rc",rc,'rct',rct,'rctName',rctName,method
-        #
-        #        if method == "DEL":
-        #            del data[cls][rc][rctName]
-        #        elif method == "B64":
-        #            data[cls][rc][rctName] = base64.standard_b64encode( data[cls][rc][rctName] )
-        #
-        #        print "cls", cls,"rc",rc,'rct',rct,'rctName',rctName,method,'FINISHED'
 
 
 

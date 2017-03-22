@@ -1,10 +1,13 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 import os
 import sys
 import argparse
 import time
 import datetime
-import json
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),'..')))
+
+import configurer
 
 ts        = time.time()
 timestamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
@@ -66,7 +69,9 @@ timestamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
 #./vcfmerger/gen_makefile.py --input RIL.lst --filter-gff S_lycopersicum_chromosomes.2.40.fa_10000.gff   --project RIL_10k                        --no-pickle --cluster-no-svg --smart_threads 25 --cluster-threads 5 --cluster-no-cols
 #make -f makefile_RIL_10k
 
-SCRIPT_DIR   = 'vcfmerger'
+SCRIPT_DIR   = os.path.dirname(os.path.abspath(__file__))
+
+#SCRIPT_DIR   = 'vcfmerger'
 AUX_DIR      = os.path.join(SCRIPT_DIR)
 
 
@@ -154,7 +159,10 @@ def listChromsGff(ingff):
     return chroms
 
 parser = argparse.ArgumentParser(description='Create makefile to convert files.')
+
 parser.add_argument( '-j'  , '--json'          , '--from_json'         , dest='fromJson'                    , default=None      , nargs='?',                       type=str  , help='load config from json')
+parser.add_argument( '-J'                      , '--to_json'           , dest='toJson'                      , default=None      , nargs='?',                       type=str  , help='save config to   json')
+
 parser.add_argument( '-i'  , '--input'         , '--inlist'            , dest='inlist'                      , default=None      , nargs='?',                       type=str  , help='input tab separated file')
 parser.add_argument( '-f'  , '--fasta'         , '--infasta'           , dest='infasta'                     , default=None      , nargs='?',                       type=str  , help='input reference fasta. requires split size')
 parser.add_argument( '-s'  , '--size'                                  , dest='size'                        , default=0         , nargs='?',                       type=int  , help='split size')
@@ -212,48 +220,11 @@ parser.add_argument( '-Fip', '--filter-prot'    , '--filter-protein'   , dest='f
 
 parser.add_argument( '-Dbt', '--db-threads'     ,                        dest='db_read_threads'             , default=1         ,                                  type=int  , help='Db - Number of threads to read raw files'                    )
 
-class WrongParameter(Exception):
-    pass
-
-def loadFromJson(options):
-    jsonFile = options.fromJson
-    print "Loading Json", jsonFile
-    
-    jsonStr = "\n".join([l for l in open(jsonFile, 'r').read().split("\n") if len(l) > 0 and not l.startswith("#")])
-    
-    print "Json String", jsonStr
-    
-    pars = json.loads(jsonStr)
-    
-    print "Json Data", pars
-    
-    valids = []
-    
-    #print "actions", parser._actions, "\n\n"
-    for action in parser._actions:
-        #print "action", action.option_strings, action.dest
-        valids.extend([ a.strip('-') for a in action.option_strings])
-        valids.append(action.dest)
-
-    valids.sort()
-    
-    for k,v in pars.items():
-        print " - {}: {}".format(k,v)
-        
-        if k not in valids:
-            parser.print_usage()
-            parser.print_help()
-            raise WrongParameter()
-            
-        setattr(options, k, v)
-
 def main(args):
     options                      = parser.parse_args(args)
 
-    jsonFile                     = options.fromJson
-    
-    if jsonFile:
-        loadFromJson(options)
+    if options.fromJson:
+        options = configurer.loadFromJson(options.fromJson, parser, "programs", "gen_makefile")
     
     inlist                       = options.inlist
     infasta                      = options.infasta
@@ -309,6 +280,10 @@ def main(args):
 
     db_read_threads              = options.db_read_threads
 
+    if options.toJson:
+        configurer.saveToJson(options.toJson, parser, options, "programs", "gen_makefile")
+        return
+
     print options
 
     chroms = None
@@ -334,9 +309,11 @@ def main(args):
         if not size:
             print "if fasta is define, size has to be defined also"
             sys.exit(1)
+            
         if not os.path.exists(infasta):
             print "infasta %s does not exists" % infasta
             sys.exit(1)
+            
         filter_gff = "%s_%s.gff" % (infasta, size)
 
         chroms = listChromsFasta(infasta)

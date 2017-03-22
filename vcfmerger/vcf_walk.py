@@ -32,7 +32,7 @@ DB_FASTA          = 6
 DB_LINE           = 7
 NUM_REGISTER_VARS = 8
 
-sys.path.insert(0, '.')
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),'.')))
 from filemanager import *
 import cluster
 import newick_to_png

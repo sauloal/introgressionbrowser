@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 #https://raw.githubusercontent.com/seb-m/pyinotify/master/python2/examples/daemon.py
 #https://github.com/seb-m/pyinotify/blob/master/python2/examples/autocompile.py

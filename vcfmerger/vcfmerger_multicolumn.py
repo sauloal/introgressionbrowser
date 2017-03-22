@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 import os
 import sys
 import csv
@@ -294,7 +294,9 @@ def main(args):
                     assert len( cols ) > 9
 
                     info      = cols[8]
-                    assert ':'  in info, line
+                    #assert ':'  in info, line
+                    if ':' not in info:
+                        continue
                     assert 'GT' in info, line
 
                     #print "has desc"
@@ -483,7 +485,8 @@ def main(args):
     os.utime(listFile, None)        
 
     if not os.path.exists(vcfFile):
-        os.symlink(invcf, vcfFile)
+        print "symlinking {} to {}".format(os.path.basename(invcf), vcfFile)
+        os.symlink(os.path.basename(invcf), vcfFile)
 
     os.utime(vcfFile , None)
 

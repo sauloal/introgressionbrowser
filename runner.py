@@ -1,6 +1,7 @@
 import glob
 import os
 import sys
+import configurer
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath( __file__ )), "vcfmerger"))
 
@@ -26,7 +27,7 @@ def get(app, data):
             for conf in inConfs:
                 print "  Conf", conf
                 
-                
+                #options = configurer.loadFromJson(options.fromJson, parser, "programs", "gen_makefile")
              
         #     inputFolder = os.path.join(analysisFolder, "input")
         #     

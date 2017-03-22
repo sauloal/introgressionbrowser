@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #!pypy-1.9/bin/pypy
 #import numpypy
 import sys, os
@@ -9,7 +9,7 @@ import time
 import multiprocessing
 import argparse
 from pprint import pprint as pp
-sys.path.insert(0, '.')
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),'.')))
 from filemanager import getFh,openvcffile,openfile,checkfile,makeIndexFile,readIndex
 
 

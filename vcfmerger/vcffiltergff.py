@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 """
 Given a VCF file, filters according to parameters
 """
@@ -10,7 +10,8 @@ import argparse
 #import copy
 #import multiprocessing
 
-sys.path.insert(0, '.')
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),'.')))
+
 import filemanager
 import vcfconcat
 
@@ -419,8 +420,8 @@ def readData(config, verbose=False):
                     config['knife_out_fhd'].close()
                     config['knife_out_fhd'] = None
 
-                full_path = os.path.abspath(  config['outfn']                 )
-                base_name = os.path.basename( config['outfn']                 )
+                full_path = os.path.abspath(  config['outfolder']             )
+                base_name = os.path.basename( config['outfolder']             )
                 base_path = os.path.dirname(  full_path                       )
                 out_path  = os.path.join(     base_path, config['outfolder']  )
                 out_dir   = os.path.join(     out_path , last_register_key[0] )

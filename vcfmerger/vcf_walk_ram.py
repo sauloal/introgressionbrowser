@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 """
 Library to access the RAM database
 Uses WALK_OUT's WALKER class
@@ -21,7 +21,7 @@ curr_path         = os.path.abspath(os.curdir)
 
 
 print "importing vcf_walk"
-sys.path.insert(0, '.')
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),'.')))
 from vcf_walk import walker
 from vcf_walk import DEBUG
 import vcf_walk

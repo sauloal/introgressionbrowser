@@ -1,15 +1,16 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 import os
 import sys
 import argparse
 import fnmatch
 import array
 import copy
+import time
 from multiprocessing import Pool
 import tempfile
 import signal
 
-sys.path.insert(0, '.')
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),'.')))
 from filemanager import dumps, getSuffix
 import newick_to_png
 
@@ -242,6 +243,7 @@ def main(args):
         #res        = calculate_cluster_raw( rows, cols, rowNames=rownames, colNames=colnamesshs )
         opts = {'rowNames':rownames, 'colNames':colnamesshs, 'dotree':dotree, 'dosvg':dosvg, 'dopng':dopng, 'dorows':dorows, 'docols':docols}
         p    = [ sppi, pool2.apply_async(calculate_cluster_raw, ( rows, cols ), opts) ]
+        #p    = [ sppi, calculate_cluster_raw(rows, cols, **opts) ]
         results2.append(p)
         #print res
         #print
@@ -251,11 +253,20 @@ def main(args):
 
     try:
         for sppi, r in results2:
+            print sppi, r
             r.wait()
+            #while not r.wait(1):
+            #    print 'w', sppi
+            #    sys.stdout.flush()
+            #    time.sleep(1)
+            #while not r.ready():
+            #    print 'r', sppi
+            #    sys.stdout.flush()
+            #    time.sleep(1)
             res = r.get()
             print "got spp", sppi,'/',numrowsG
             print "saving res", sppi
-            db[ 'clusters' ][ sppi ] = res
+            #db[ 'clusters' ][ sppi ] = res
             print "res saved", sppi
 
     except KeyboardInterrupt:
@@ -263,6 +274,9 @@ def main(args):
         pool2.terminate()
         pool2.join()
         sys.exit(1)
+
+    except:
+        raise
 
     pool2.join()
     pool2.terminate()
@@ -337,15 +351,17 @@ def calculate_cluster( rowsO, rowNames=None, colNames=None, dotree=True, dosvg=T
 
 
 def calculate_cluster_raw( cols, rows, rowNames=None, colNames=None, dotree=True, dosvg=True, dopng=True, dorows=True, docols=True ):
-
+    print "calculate_cluster_raw"
     resF = {}
     for method_name, merhod_func in [ ['Chromosome Clustering', cluster_hier] ]:
         resF[ method_name ] = merhod_func( cols, rows, rowNames=rowNames, colNames=colNames, dotree=dotree, dosvg=dosvg, dopng=dopng, dorows=dorows, docols=docols )
-
+    print resF
     return resF
 
 
 def cluster_hier(cols, rows, rowNames=None, colNames=None, dotree=True, dosvg=True, dopng=True, dorows=True, docols=True):
+    print "cluster_hier"
+
     rowsOrder, rowsSvg, rowsNewick, rowsPng = [ None, "", None, None ]
     colsOrder, colsSvg, colsNewick, colsPng = [ None, "", None, None ]
 
@@ -357,6 +373,7 @@ def cluster_hier(cols, rows, rowNames=None, colNames=None, dotree=True, dosvg=Tr
         rowsOrder  = list( rowsOrder.tolist() )
         rowsNewick = str(  rowsNewick         )
         rowsSvg    = str(  rowsSvg            )
+        print ' finished clustering rows'
 
     if docols:
         print ' clustering cols'
@@ -369,6 +386,7 @@ def cluster_hier(cols, rows, rowNames=None, colNames=None, dotree=True, dosvg=Tr
 
 
     print 'finished clustering'
+    sys.stdout.flush()
     resD =  {
         'cols': {
             #'colNames'   : colNames,
@@ -396,6 +414,8 @@ def cluster_hier(cols, rows, rowNames=None, colNames=None, dotree=True, dosvg=Tr
         }
     }
 
+    print resD
+
     return resD
 
 
@@ -421,6 +441,7 @@ def do_cluster( rows, nodeNames=None, dotree=True, dosvg=True, dopng=True ):
     rowsSvg           = ""
     rowsNewick        = None
     rowsPng           = None
+
     if dotree:
         print ' clustering - creating tree'
         rowsTree, rowsSvg = mat2tree( rowsLinkMat, nodeNames=nodeNames, dosvg=dosvg )
@@ -432,6 +453,7 @@ def do_cluster( rows, nodeNames=None, dotree=True, dosvg=True, dopng=True ):
             rowsPng = newick_to_png.add_seq( rowsNewick, addcaption=False )
 
     print "returning"
+    sys.stdout.flush()
     #print 'rows dist   ', rowsDist
     #print 'rows distsqr', rowsDistSqr
     #print 'rows linkmat', rowsLinkMat
@@ -455,30 +477,33 @@ def mat2tree(mat, nodeNames=None, dosvg=True):
         pass
 
 
-    T         = hier.to_tree( mat )
+    R,T       = hier.to_tree( mat, rd=True )
+    #print "ROOT", R, "TREE", T
     root      = Tree()
     root.dist = 0
     root.name = 'root'
-    item2node = {T: root}
-    to_visit  = [T]
+    item2node = {R.get_id(): root}
+    to_visit  = T
 
     while to_visit:
         node = to_visit.pop()
+        #print "NODE", node
         cl_dist = node.dist / 2.0
 
-        for ch_node in [node.left, node.right]:
-
+        for ch_node in [node.get_left(), node.get_right()]:
             if ch_node:
+                ch_node_id         = ch_node.get_id()
+                ch_node_name       = str(ch_node_id)
                 ch                 = Tree()
                 ch.dist            = cl_dist
-                ch.name            = str(ch_node.id)
+                ch.name            = ch_node_name
 
                 if nodeNames:
-                    if ch_node.id < len(nodeNames):
-                        ch.name    = nodeNames[ ch_node.id ]
+                    if ch_node_id < len(nodeNames):
+                        ch.name    = nodeNames[ ch_node_id ]
 
-                item2node[ch_node] = ch
-                item2node[node   ].add_child(ch)
+                item2node[ch_node_id] = ch
+                item2node[ch_node_id].add_child(ch)
                 to_visit.append(ch_node)
 
     svg = ""

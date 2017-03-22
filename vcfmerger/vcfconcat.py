@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 """
 Concatenates all SNPs from a VCF file in either FASTA or aln (clustal) format
 """
@@ -9,7 +9,7 @@ import multiprocessing
 from pprint      import pprint as pp
 from collections import defaultdict, Counter
 
-sys.path.insert(0, '.')
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),'.')))
 import vcfmerger
 import editdist
 from treemanager import fixsppname

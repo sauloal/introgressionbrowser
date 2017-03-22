@@ -1,11 +1,11 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 """
 Accepts a VCF file (designed for a a merged VCF file) and simplify it by merging its lines and excluding complicating SNPs as requested
 Requires vcfmerger
 """
 import sys, os
 import argparse
-sys.path.insert(0, '.')
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),'.')))
 import vcfmerger
 #import gzip
 #import datetime

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 """
 
 """
@@ -11,7 +11,7 @@ import math
 import copy
 from pprint import pprint as pp
 
-sys.path.insert(0, '.')
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),'.')))
 from filemanager import getFh,openvcffile,openfile,checkfile,makeIndexFile,readIndex
 
 #ulimit -n 4096

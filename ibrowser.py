@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 """
 Web server for the Introgression browser.
 Reads config.py to setup.

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 """
 Library to access the SQLite database
 Uses WALK_OUT's WALKER class
@@ -12,7 +12,7 @@ import cPickle
 from pprint import pprint as pp
 
 print "importing vcf_walk sql"
-sys.path.insert(0, '.')
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),'.')))
 import vcf_walk
 from   vcf_walk    import walker
 from   vcf_walk    import DEBUG

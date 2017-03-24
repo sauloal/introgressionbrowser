@@ -3,7 +3,8 @@
 Library to access the SQLite database
 Uses WALK_OUT's WALKER class
 """
-import os, sys
+import os
+import sys
 import time
 import copy
 import zlib

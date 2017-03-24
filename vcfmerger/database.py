@@ -1,5 +1,8 @@
 print "importing sqlalchemy"
 
+import os
+import sys
+
 from sqlalchemy.ext.declarative import declarative_base
 #from sqlalchemy.orm             import sessionmaker, relationship, backref
 from sqlalchemy.orm             import sessionmaker

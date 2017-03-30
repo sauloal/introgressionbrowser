@@ -392,13 +392,15 @@ var mainController = function ( $scope, $http, mySharedService ) {
         $scope.vars.order.rows[dfn] = Array.apply(null, Array(data.data_info.num_rows)).map(function(_,i){return i;});
 
 
-        console.log('cluster keys', Object.keys($scope.cluster));
+        if ( $scope.cluster !== null ) {
+            console.log('cluster keys', Object.keys($scope.cluster));
 
-        for ( var c in $scope.cluster ) {
-            console.log('adding cluster', c);
-            $scope.clusterNames.push( c );
-            $scope.vars.order.rows[ c ] = $scope.cluster[ c ].rows.rowsOrder;
-            $scope.vars.order.cols[ c ] = $scope.cluster[ c ].cols.colsOrder;
+            for ( var c in $scope.cluster ) {
+                console.log('adding cluster', c);
+                $scope.clusterNames.push( c );
+                $scope.vars.order.rows[ c ] = $scope.cluster[ c ].rows.rowsOrder;
+                $scope.vars.order.cols[ c ] = $scope.cluster[ c ].cols.colsOrder;
+            }
         }
 
         console.log($scope.vars.order.cols);

@@ -1296,9 +1296,10 @@ def get_data_raw(man, ref, chrom, startPos, endPos, group_every, num_classes, ev
     #DELETING IMAGES
     if 'clusters' in table:
         clusters = table['clusters']
-        #print "CLUSTERS", clusters
-        filterClusters(clusters, "DEL")
-        appendClusters( man, clusters, chrom )
+        if clusters is not None:
+            print "CLUSTERS", clusters
+            filterClusters(clusters, "DEL")
+            appendClusters( man, clusters, chrom )
 
     print "RETURNING TABLE"
     #print "TABLE", table
